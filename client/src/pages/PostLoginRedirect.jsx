@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "../supabaseClient";
+import { supabase } from "../utils/supabaseClient";
 
 const PostLoginRedirect = () => {
   const navigate = useNavigate();

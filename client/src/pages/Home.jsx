@@ -12,37 +12,31 @@ const Home = () => {
       style={{ backgroundImage: `url(${floralBg})` }}
     >
       {/* Hero Section */}
-<section className="relative h-[50vh] overflow-hidden">
+<section className="bg-floral bg-repeat bg-[length:400px] bg-fixed px-6 py-12 sm:py-20">
+  <div className="max-w-7xl mx-auto flex flex-col-reverse md:flex-row items-center justify-between gap-8">
+    
+    {/* Left: Headline + CTA */}
+    <div className="flex-1 flex flex-col items-start md:items-start text-left space-y-6">
+      <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold leading-tight">
+        Capturing<br />The Heart of<br />Every Moment
+      </h1>
 
-  {/* Logo Top Left */}
-  <div className="absolute left-40 top-1/2 transform -translate-y-1/2 z-30">
-  <img
-    src={logo}
-    alt="FC Photo Houston"
-    className="h-70 md:h-80 w-auto object-contain"
-  />
-</div>
+      <Link
+        to="/services"
+        className="inline-block px-6 py-3 bg-black text-white rounded-full hover:bg-gray-800 transition"
+      >
+        Explore Sessions
+      </Link>
+    </div>
 
-  {/* Right Image */}
-  <img
-    src={heroImage}
-    alt="Framed elegance"
-    className="absolute right-[1%] top-1/2 transform -translate-y-1/2 w-[40%] md:w-[30%] rounded-lg shadow-xl border-4 border-white object-cover"
-    style={{ zIndex: 10 }}
-  />
-
-  {/* Centered Headline and CTA */}
-  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center z-20 px-2 space-y-12">
-    <h1 className="text-3xl md:text-5xl font-bold leading-snug">
-      Capturing<br />The Heart of<br />Every Moment
-    </h1>
-
-    <Link
-      to="/services"
-      className="inline-block mt-4 px-6 py-2 md:py-3 bg-black text-white rounded-full hover:bg-gray-800 transition"
-    >
-      Explore Sessions
-    </Link>
+    {/* Right: Hero Image */}
+    <div className="flex-1 flex justify-center md:justify-end">
+      <img
+        src={heroImage}
+        alt="Framed elegance"
+        className="w-[80%] sm:w-[60%] md:w-[75%] lg:w-[70%] rounded-xl shadow-xl border-4 border-white object-cover"
+      />
+    </div>
   </div>
 </section>
 

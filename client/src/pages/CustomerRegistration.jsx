@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { supabase } from "../supabaseClient";
+import { supabase } from "../utils/supabaseClient";
 
 const CustomerRegistration = () => {
   const [form, setForm] = useState({ name: "", phone: "", address: "" });

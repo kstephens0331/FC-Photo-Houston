@@ -10,6 +10,9 @@ module.exports = {
         black: '#000000',
         white: '#ffffff',
       },
+      backgroundImage: {
+        'floral': "url('/src/assets/gray-floral.png')", // Named custom background
+      },
     },
   },
   plugins: [],

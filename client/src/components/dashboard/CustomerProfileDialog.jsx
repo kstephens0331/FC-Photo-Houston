@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { supabase } from "../../supabaseClient";
+import { supabase } from "../../utils/supabaseClient";
 
 const CustomerProfileDialog = ({ onComplete }) => {
   const [name, setName] = useState("");
