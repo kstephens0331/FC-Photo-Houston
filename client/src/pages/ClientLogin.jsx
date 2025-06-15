@@ -10,15 +10,15 @@ const ClientLogin = () => {
   const [step, setStep] = useState("start");
   const [error, setError] = useState("");
 
-  const handleGoogleLogin = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: window.location.origin + "/post-login",
-      },
-    });
-    if (error) setError("Google login failed.");
-  };
+const handleGoogleLogin = async () => {
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: "https://fcphotohouston.com/dashboard"
+    },
+  });
+  if (error) setError("Google login failed.");
+};
 
   const handleSendOtp = async () => {
     const { error } = await supabase.auth.signInWithOtp({ phone });
