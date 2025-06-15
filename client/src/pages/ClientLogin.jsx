@@ -46,6 +46,15 @@ const ClientLogin = () => {
 
     navigate(data ? "/dashboard" : "/register-complete");
   };
+  const handleLogin = async () => {
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: 'https://fcphotohouston.com/dashboard' // or just / if dashboard is root
+    }
+  })
+  if (error) console.error('Login error:', error.message)
+};
 
   return (
     <div
