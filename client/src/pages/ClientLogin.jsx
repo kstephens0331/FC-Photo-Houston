@@ -1,79 +1,59 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "../utils/supabaseClient";
-import floralBg from "../assets/gray-floral.png";
-import { useAuth } from "../hooks/useAuth";
 
 const ClientLogin = () => {
   const navigate = useNavigate();
 
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
-  const [step, setStep] = useState("start"); // 'start' or 'otp'
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [step, setStep] = useState("start"); // 'start' | 'otp'
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (event === "SIGNED_IN" && session?.user) {
-          const user = session.user;
+  // Google OAuth
+  const handleGoogleLogin = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: "https://fcphotohouston.com/post-login",
+      },
+    });
 
-          // Check if the customer already exists
-          const { data: existingCustomer, error: fetchError } = await supabase
-            .from("customers")
-            .select("id")
-            .eq("id", user.id) // assuming id is linked
-            .single();
-
-          if (!existingCustomer && !fetchError) {
-            const { error: insertError } = await supabase
-              .from("customers")
-              .insert([
-                {
-                  id: user.id,
-                  email: user.email,
-                  full_name:
-                    user.user_metadata?.full_name ||
-                    user.user_metadata?.name ||
-                    "",
-                },
-              ]);
-
-            if (insertError) {
-              console.error("Customer insert failed:", insertError.message);
-            }
-          }
-
-          // Redirect to dashboard
-          navigate("/dashboard");
-        }
-      }
-    );
-
-    return () => {
-      authListener?.subscription.unsubscribe();
-    };
-  }, [navigate]);
-
-const handleGoogleLogin = async () => {
-  const { error } = await supabase.auth.signInWithOAuth({
-    provider: "google",
-    options: {
-      redirectTo: 'https://fcphotohouston.com/post-login'
+    if (error) {
+      console.error("Google login failed:", error.message);
+      setError("Google login failed.");
     }
-  });
-
-  if (error) {
-    console.error("Google login failed:", error.message);
-  }
-};
-
-  const handleSendOtp = async () => {
-    const { error } = await supabase.auth.signInWithOtp({ phone });
-    if (error) setError("OTP request failed.");
-    else setStep("otp");
   };
 
+  // Email/password login
+  const handleEmailLogin = async () => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      console.error("Email login failed:", error.message);
+      setError("Invalid email or password.");
+    } else {
+      navigate("/dashboard");
+    }
+  };
+
+  // Phone OTP send
+  const handleSendOtp = async () => {
+    const { error } = await supabase.auth.signInWithOtp({ phone });
+
+    if (error) {
+      setError("Failed to send code. Check your number.");
+    } else {
+      setStep("otp");
+    }
+  };
+
+  // Phone OTP verify
   const handleVerifyOtp = async () => {
     const { error } = await supabase.auth.verifyOtp({
       phone,
@@ -81,60 +61,73 @@ const handleGoogleLogin = async () => {
       type: "sms",
     });
 
-    if (error) return setError("Invalid code.");
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return;
-
-    const { data } = await supabase
-      .from("customers")
-      .select("id")
-      .eq("id", user.id)
-      .maybeSingle();
-
-    navigate(data ? "/dashboard" : "/register-complete");
+    if (error) {
+      setError("Invalid code.");
+    } else {
+      navigate("/dashboard");
+    }
   };
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center px-4 py-16 bg-repeat bg-fixed bg-[length:400px]"
-      style={{ backgroundImage: `url(${floralBg})` }}
-    >
-      <div className="w-full max-w-md bg-white/30 backdrop-blur-md p-8 rounded-2xl shadow-lg border border-white/30">
+    <div className="min-h-screen flex items-center justify-center px-4 py-16 bg-gray-100">
+      <div className="w-full max-w-md bg-white p-8 rounded-xl shadow-xl">
         <h2 className="text-3xl font-bold text-center mb-6">Customer Login</h2>
 
-        {error && (
-          <div className="text-red-600 text-sm mb-4 text-center">{error}</div>
-        )}
+        {error && <div className="text-red-600 text-sm text-center mb-4">{error}</div>}
 
         {step === "start" && (
           <>
+            {/* Email login */}
+            <input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full p-3 rounded-lg border border-gray-300 mb-3"
+            />
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full p-3 rounded-lg border border-gray-300 mb-4"
+            />
+            <button
+              onClick={handleEmailLogin}
+              className="w-full py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition mb-4"
+            >
+              Login with Email
+            </button>
+
+            <div className="text-center text-sm text-gray-500 mb-4">or</div>
+
+            {/* Google login */}
+            <button
+              onClick={handleGoogleLogin}
+              className="w-full py-3 border border-black text-black rounded-lg hover:bg-gray-100 transition mb-4"
+            >
+              Sign in with Google
+            </button>
+
+            {/* Phone login */}
             <input
               type="tel"
               placeholder="Phone Number"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="w-full p-3 rounded-lg bg-white/70 placeholder-gray-500 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-black mb-4"
+              className="w-full p-3 rounded-lg border border-gray-300 mb-4"
             />
             <button
               onClick={handleSendOtp}
-              className="w-full py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition mb-4"
+              className="w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition"
             >
               Send Code
             </button>
-            <div className="text-center my-3 text-sm text-gray-600">or</div>
-            <button
-              onClick={handleGoogleLogin}
-              className="w-full py-3 bg-white border border-black text-black rounded-lg hover:bg-gray-100 transition"
-            >
-              Sign in with Google
-            </button>
-            <p className="text-sm mt-4">
-              Don't have an account?{" "}
+
+            <p className="text-sm text-center mt-4">
+              New here?{" "}
               <Link to="/register" className="text-blue-600 hover:underline">
-                Register here
+                Register now
               </Link>
             </p>
           </>
@@ -147,7 +140,7 @@ const handleGoogleLogin = async () => {
               placeholder="Enter OTP"
               value={otp}
               onChange={(e) => setOtp(e.target.value)}
-              className="w-full p-3 rounded-lg bg-white/70 placeholder-gray-500 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-black mb-4"
+              className="w-full p-3 rounded-lg border border-gray-300 mb-4"
             />
             <button
               onClick={handleVerifyOtp}
@@ -155,6 +148,12 @@ const handleGoogleLogin = async () => {
             >
               Verify Code
             </button>
+            <p
+              className="text-sm text-blue-600 text-center mt-3 cursor-pointer hover:underline"
+              onClick={() => setStep("start")}
+            >
+              Back to Login Options
+            </p>
           </>
         )}
       </div>
