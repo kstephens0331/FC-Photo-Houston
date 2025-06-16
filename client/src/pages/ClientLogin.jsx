@@ -13,19 +13,18 @@ const ClientLogin = () => {
   const [error, setError] = useState("");
 
   // Google OAuth
-  const handleGoogleLogin = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: "https://fcphotohouston.com/post-login",
-      },
-    });
+const handleGoogleLogin = async () => {
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: 'https://fcphotohouston.com/dashboard', // Make sure this matches the dashboard URL
+    },
+  });
 
-    if (error) {
-      console.error("Google login failed:", error.message);
-      setError("Google login failed.");
-    }
-  };
+  if (error) {
+    console.error('Google sign-in error:', error.message);
+  }
+};
 
   // Email/password login
   const handleEmailLogin = async () => {
