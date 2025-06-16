@@ -15,7 +15,7 @@ const PostLoginRedirect = () => {
         return navigate("/client-login");
       }
 
-      // Attempt to exchange code for session
+      // Step 1: Exchange the OAuth code for a session
       const { error } = await supabase.auth.exchangeCodeForSession();
 
       if (error) {
@@ -23,17 +23,32 @@ const PostLoginRedirect = () => {
         return navigate("/client-login");
       }
 
-      // ✅ Exchange succeeded – safe to clean up URL and redirect
+      // Step 2: Verify session was created
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session) {
+        console.error("No session found after token exchange");
+        return navigate("/client-login");
+      }
+
+      // ✅ Step 3: Clean up URL (remove ?code, ?scope, etc.) only after session is saved
       window.history.replaceState({}, document.title, "/dashboard");
+
+      // Optional: navigate instead of replaceState if you prefer:
+      // navigate("/dashboard", { replace: true });
     };
 
     finalizeLogin();
   }, [navigate, location]);
 
   return (
-    <div className="p-6 text-center text-gray-700">
-      <h1 className="text-2xl font-semibold mb-4">Logging you in...</h1>
-      <p>Please wait while we finalize your session.</p>
+    <div className="flex items-center justify-center h-screen px-6 text-center">
+      <div>
+        <h1 className="text-2xl font-semibold mb-2">Logging you in...</h1>
+        <p className="text-gray-600">Please wait while we finalize your session.</p>
+      </div>
     </div>
   );
 };
