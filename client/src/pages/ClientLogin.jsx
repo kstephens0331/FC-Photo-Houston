@@ -55,16 +55,18 @@ const ClientLogin = () => {
     };
   }, [navigate]);
 
-  const handleGoogleLogin = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-options: {
-  redirectTo: 'https://fcphotohouston.com/post-login'
-}
-    });
+const handleGoogleLogin = async () => {
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: 'https://fcphotohouston.com/post-login'
+    }
+  });
 
-    if (error) setError("Google login failed.");
-  };
+  if (error) {
+    console.error("Google login failed:", error.message);
+  }
+};
 
   const handleSendOtp = async () => {
     const { error } = await supabase.auth.signInWithOtp({ phone });
