@@ -1,12 +1,19 @@
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "../utils/supabaseClient";
 
 const PostLoginRedirect = () => {
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
-    const handleOAuth = async () => {
+    const finalizeLogin = async () => {
+      const hasAuthCode = location.search.includes("code=");
+      if (!hasAuthCode) {
+        console.warn("No auth code in URL — skipping token exchange");
+        return navigate("/client-login");
+      }
+
       const { error } = await supabase.auth.exchangeCodeForSession();
 
       if (error) {
@@ -14,27 +21,16 @@ const PostLoginRedirect = () => {
         return navigate("/client-login");
       }
 
-      // Wait for session to fully initialize before continuing
-      const {
-        data: { session },
-        error: sessionError,
-      } = await supabase.auth.getSession();
-
-      if (sessionError || !session) {
-        console.error("Session not established:", sessionError);
-        return navigate("/client-login");
-      }
-
-      // Now safe to redirect
+      // Successful login
       navigate("/dashboard");
     };
 
-    handleOAuth();
-  }, [navigate]);
+    finalizeLogin();
+  }, [navigate, location]);
 
   return (
-    <div className="p-6 text-center text-lg">
-      Finalizing login…
+    <div className="p-6 text-center">
+      Finalizing login...
     </div>
   );
 };
