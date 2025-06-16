@@ -1,8 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { supabase } from './utils/supabaseClient';
-
-// Layout
+import React from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { useAuth } from './hooks/useAuth';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 
@@ -12,6 +10,7 @@ import ClientGallery from "./pages/ClientGallery";
 import Favorites from "./components/dashboard/Favorites";
 import Quotes from "./components/dashboard/Quotes";
 import Settings from "./components/dashboard/Settings";
+
 // Public Pages
 import Home from './pages/Home';
 import Services from './pages/Services';
@@ -27,43 +26,23 @@ import AdminLogin from './pages/admin/AdminLogin';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminCustomer from './pages/admin/AdminCustomer';
 
-// 🔐 Admin Auth Wrapper
+// 🔐 Admin Auth Wrapper — left unchanged
 const AdminRoute = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [checking, setChecking] = useState(true);
-
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (data?.user?.email === "astephens@fcphotohouston.com") {
-        setUser(data.user);
-      }
-      setChecking(false);
-    });
-  }, []);
-
-  if (checking) return <div className="p-6">Checking admin auth...</div>;
+  const { user, loading } = useAuth();
+  if (loading) return <div className="p-6">Checking admin auth...</div>;
   return user ? children : <Navigate to="/" replace />;
 };
 
-// 🔐 Customer Auth Wrapper
+// 🔐 Customer Auth Wrapper — now using global useAuth
 const CustomerRoute = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [checking, setChecking] = useState(true);
-
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (data?.user) setUser(data.user);
-      setChecking(false);
-    });
-  }, []);
-
-  if (checking) return <div className="p-6">Checking login...</div>;
+  const { user, loading } = useAuth();
+  if (loading) return <div className="p-6">Checking login...</div>;
   return user ? children : <Navigate to="/client-login" replace />;
 };
 
 const App = () => {
   return (
-    <Router>
+    <>
       <Navbar />
       <main className="min-h-screen">
         <Routes>
@@ -76,21 +55,22 @@ const App = () => {
           <Route path="/register" element={<CustomerRegistration />} />
           <Route path="/register-complete" element={<RegisterComplete />} />
           <Route path="/post-login" element={<PostLoginRedirect />} />
+          
 
           {/* 🔐 Customer Dashboard */}
           <Route
-  path="/dashboard"
-  element={
-    <CustomerRoute>
-      <DashboardLayout />
-    </CustomerRoute>
-  }
->
-  <Route path="gallery" element={<ClientGallery />} />
-  <Route path="favorites" element={<Favorites />} />
-  <Route path="quotes" element={<Quotes />} />
-  <Route path="settings" element={<Settings />} />
-</Route>
+            path="/dashboard"
+            element={
+              <CustomerRoute>
+                <DashboardLayout />
+              </CustomerRoute>
+            }
+          >
+            <Route path="gallery" element={<ClientGallery />} />
+            <Route path="favorites" element={<Favorites />} />
+            <Route path="quotes" element={<Quotes />} />
+            <Route path="settings" element={<Settings />} />
+          </Route>
 
           {/* 🔐 Admin Routes */}
           <Route path="/admin" element={<AdminLogin />} />
@@ -116,7 +96,7 @@ const App = () => {
         </Routes>
       </main>
       <Footer />
-    </Router>
+    </>
   );
 };
 

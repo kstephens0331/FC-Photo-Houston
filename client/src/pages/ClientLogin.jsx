@@ -1,24 +1,70 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "../utils/supabaseClient";
 import floralBg from "../assets/gray-floral.png";
+import { useAuth } from "../hooks/useAuth";
 
 const ClientLogin = () => {
   const navigate = useNavigate();
+
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
-  const [step, setStep] = useState("start");
+  const [step, setStep] = useState("start"); // 'start' or 'otp'
   const [error, setError] = useState("");
 
-const handleGoogleLogin = async () => {
-  const { error } = await supabase.auth.signInWithOAuth({
-    provider: "google",
-    options: {
-      redirectTo: "https://fcphotohouston.com/dashboard"
-    },
-  });
-  if (error) setError("Google login failed.");
-};
+  useEffect(() => {
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === "SIGNED_IN" && session?.user) {
+          const user = session.user;
+
+          // Check if the customer already exists
+          const { data: existingCustomer, error: fetchError } = await supabase
+            .from("customers")
+            .select("id")
+            .eq("id", user.id) // assuming id is linked
+            .single();
+
+          if (!existingCustomer && !fetchError) {
+            const { error: insertError } = await supabase
+              .from("customers")
+              .insert([
+                {
+                  id: user.id,
+                  email: user.email,
+                  full_name:
+                    user.user_metadata?.full_name ||
+                    user.user_metadata?.name ||
+                    "",
+                },
+              ]);
+
+            if (insertError) {
+              console.error("Customer insert failed:", insertError.message);
+            }
+          }
+
+          // Redirect to dashboard
+          navigate("/dashboard");
+        }
+      }
+    );
+
+    return () => {
+      authListener?.subscription.unsubscribe();
+    };
+  }, [navigate]);
+
+  const handleGoogleLogin = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+options: {
+  redirectTo: 'https://fcphotohouston.com/post-login'
+}
+    });
+
+    if (error) setError("Google login failed.");
+  };
 
   const handleSendOtp = async () => {
     const { error } = await supabase.auth.signInWithOtp({ phone });
@@ -35,26 +81,19 @@ const handleGoogleLogin = async () => {
 
     if (error) return setError("Invalid code.");
 
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) return;
 
     const { data } = await supabase
       .from("customers")
       .select("id")
-      .eq("user_id", user.id)
+      .eq("id", user.id)
       .maybeSingle();
 
     navigate(data ? "/dashboard" : "/register-complete");
   };
-  const handleLogin = async () => {
-  const { error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      redirectTo: 'https://fcphotohouston.com/dashboard' // or just / if dashboard is root
-    }
-  })
-  if (error) console.error('Login error:', error.message)
-};
 
   return (
     <div
@@ -90,6 +129,12 @@ const handleGoogleLogin = async () => {
             >
               Sign in with Google
             </button>
+            <p className="text-sm mt-4">
+              Don't have an account?{" "}
+              <Link to="/register" className="text-blue-600 hover:underline">
+                Register here
+              </Link>
+            </p>
           </>
         )}
 

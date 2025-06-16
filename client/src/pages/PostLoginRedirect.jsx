@@ -6,23 +6,37 @@ const PostLoginRedirect = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const routeUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return navigate("/login");
+    const handleOAuth = async () => {
+      const { error } = await supabase.auth.exchangeCodeForSession();
 
-      const { data } = await supabase
-        .from("customers")
-        .select("id")
-        .eq("user_id", user.id)
-        .maybeSingle();
+      if (error) {
+        console.error("OAuth exchange failed:", error.message);
+        return navigate("/client-login");
+      }
 
-      navigate(data ? "/dashboard" : "/register-complete");
+      // Wait for session to fully initialize before continuing
+      const {
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.getSession();
+
+      if (sessionError || !session) {
+        console.error("Session not established:", sessionError);
+        return navigate("/client-login");
+      }
+
+      // Now safe to redirect
+      navigate("/dashboard");
     };
 
-    routeUser();
+    handleOAuth();
   }, [navigate]);
 
-  return <p className="text-center mt-40 text-lg">Redirecting...</p>;
+  return (
+    <div className="p-6 text-center text-lg">
+      Finalizing login…
+    </div>
+  );
 };
 
 export default PostLoginRedirect;
