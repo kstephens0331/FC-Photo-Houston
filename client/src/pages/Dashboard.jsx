@@ -13,21 +13,28 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const verifySession = async () => {
-      const {
-        data: { session },
-        error
-      } = await supabase.auth.getSession();
+  const verifySession = async () => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
 
-      if (!session || error) {
-        navigate("/client-login");
+    if (!session) {
+      navigate('/client-login');
+    } else {
+      const { data: userData, error } = await supabase.auth.getUser();
+
+      if (error) {
+        console.error('User fetch error:', error.message);
+        navigate('/client-login');
       } else {
         setLoading(false);
       }
-    };
+    }
+  };
 
-    verifySession();
-  }, [navigate]);
+  verifySession();
+}, []);
+
 
   if (loading) return null; // Or add a loading spinner
 
