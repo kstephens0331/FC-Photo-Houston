@@ -4,13 +4,43 @@ import { FiMenu, FiLogOut } from "react-icons/fi";
 import { supabase } from "../../utils/supabaseClient";
 
 const DashboardLayout = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate("/");
-  };
+  useEffect(() => {
+    const checkRedirect = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        return navigate("/client-login");
+      }
+
+      const { data: customer, error } = await supabase
+        .from("customers")
+        .select("is_admin, profile_complete")
+        .eq("user_id", user.id)
+        .single();
+
+      if (error) {
+        console.error("Customer lookup failed:", error.message);
+        return navigate("/client-login");
+      }
+
+      if (customer.is_admin) {
+        return navigate("/admin/dashboard");
+      }
+
+      // Optionally redirect new users to complete registration
+      // if (!customer.profile_complete) {
+      //   return navigate("/register-complete");
+      // }
+
+      setLoading(false);
+    };
+
+    checkRedirect();
+  }, [navigate]);
+
+  if (loading) return <div className="p-6">Loading dashboard...</div>;
 
   return (
     <div className="min-h-screen flex bg-white text-black">
