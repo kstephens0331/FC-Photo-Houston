@@ -8,39 +8,53 @@ export default function ClientLogin() {
 
   // Check for existing session and redirect if valid
   useEffect(() => {
-    const checkSession = async () => {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const user = sessionData?.session?.user;
+  const checkSession = async () => {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const user = sessionData?.session?.user;
 
-      if (!user) {
-        setStatus("login");
-        return;
-      }
+    if (!user) {
+      setStatus("login");
+      return;
+    }
 
-      // Check customer record
-      const { data: customer, error } = await supabase
+    // Try to get customer record
+    const { data: customer, error } = await supabase
+      .from("customers")
+      .select("id, is_admin")
+      .eq("user_id", user.id)
+      .single();
+
+    // Auto-insert customer record if missing
+    if (error || !customer) {
+      console.warn("No customer found. Creating one...");
+
+      const { data: insertData, error: insertError } = await supabase
         .from("customers")
+        .insert({
+          user_id: user.id,
+          email: user.email,
+          is_admin: false,
+        })
         .select("is_admin")
-        .eq("user_id", user.id)
         .single();
 
-      if (error || !customer) {
-        console.warn("⚠️ No matching customer record, signing out.");
-        await supabase.auth.signOut();
-        setStatus("login");
-        return;
+      if (insertError) {
+        console.error("Insert failed:", insertError.message);
+        return setStatus("login");
       }
 
-      // Redirect based on role
-      if (customer.is_admin) {
-        return navigate("/admin/dashboard");
-      } else {
-        return navigate("/dashboard");
-      }
-    };
+      return navigate("/dashboard");
+    }
 
-    checkSession();
-  }, [navigate]);
+    if (customer.is_admin) {
+      return navigate("/admin/dashboard");
+    }
+
+    return navigate("/dashboard");
+  };
+
+  checkSession();
+}, [navigate]);
 
   const handleGoogleLogin = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
