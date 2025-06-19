@@ -23,7 +23,14 @@ import NotFound from './pages/NotFound';
 // Admin Portal Pages
 import AdminLogin from './pages/admin/AdminLogin';
 import AdminLayout from "./layouts/AdminLayout";
-import AdminDashboard from "./admin/AdminDashboard";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminSessions from "./pages/admin/AdminSessions";
+import AdminCustomer from "./pages/admin/AdminCustomer";
+import AdminCustomerEdit from "./pages/admin/AdminCustomerEdit";
+import AdminSessionCreate from "./pages/admin/AdminSessionCreate";
+import AdminPhotoUpload from "./pages/admin/AdminPhotoUpload";
+import AdminSessionDetails from "./pages/admin/AdminSessionDetails";
+
 
 
 
