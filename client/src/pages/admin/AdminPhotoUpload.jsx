@@ -59,12 +59,10 @@ export default function AdminPhotoUpload() {
       return;
     }
 
-    const uploadedUrls = [];
-
     for (const file of files) {
       const filePath = `${selectedCustomerId}/${selectedSessionId}/${Date.now()}-${file.name}`;
 
-      const { data, error: uploadError } = await supabase.storage
+      const { data: storageData, error: uploadError } = await supabase.storage
         .from("photos")
         .upload(filePath, file);
 
@@ -79,25 +77,32 @@ export default function AdminPhotoUpload() {
         .from("photos")
         .getPublicUrl(filePath);
 
-      uploadedUrls.push(publicUrlData.publicUrl);
+      const publicUrl = publicUrlData?.publicUrl;
+      if (!publicUrl) {
+        setError("Failed to get public URL.");
+        setUploading(false);
+        return;
+      }
+
+      // ✅ Insert into photos table using correct column names
+      const { error: insertError } = await supabase.from("photos").insert({
+        user_id: selectedCustomerId,
+        url: publicUrl,
+        session_id: selectedSessionId,
+        viewable: true,
+        status: 'pending',
+      });
+
+      if (insertError) {
+        console.error("Error saving photo records:", insertError.message);
+        setError("Failed to save photo records.");
+        setUploading(false);
+        return;
+      }
     }
 
-    const photoRecords = uploadedUrls.map((url) => ({
-      customer_id: selectedCustomerId,
-      session_id: selectedSessionId,
-      image_url: url,
-    }));
-
-    const { error: insertError } = await supabase.from("photos").insert(photoRecords);
-
-    if (insertError) {
-      console.error("Error saving photo records:", insertError.message);
-      setError("Failed to save photo records.");
-    } else {
-      setSuccess("Photos uploaded successfully!");
-      setFiles([]);
-    }
-
+    setSuccess("Photos uploaded successfully!");
+    setFiles([]);
     setUploading(false);
   };
 
@@ -114,7 +119,7 @@ export default function AdminPhotoUpload() {
         value={selectedCustomerId}
         onChange={(e) => {
           setSelectedCustomerId(e.target.value);
-          setSelectedSessionId(""); // clear session when customer changes
+          setSelectedSessionId("");
         }}
       >
         <option value="">-- Choose a customer --</option>
