@@ -25,7 +25,7 @@ import NotFound from './pages/NotFound';
 import AdminLogin from './pages/admin/AdminLogin';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminCustomer from './pages/admin/AdminCustomer';
-import { AuthProvider } from "./context/AuthContext";
+import { useAuth } from "./context/AuthContext";
 import AdminSessions from "./pages/admin/AdminSessions";
 
 
