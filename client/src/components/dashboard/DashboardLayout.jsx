@@ -8,20 +8,23 @@ const DashboardLayout = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const checkAccess = async () => {
+    const verifyAccess = async () => {
+      console.log("🔁 Loading dashboard layout...");
+
       const {
         data: { session },
         error: sessionError
       } = await supabase.auth.getSession();
 
       if (sessionError || !session) {
-        console.warn("No active session.");
+        console.warn("❌ No active session");
         return navigate("/client-login");
       }
 
       const { data: { user }, error: userError } = await supabase.auth.getUser();
+
       if (userError || !user) {
-        console.error("Failed to fetch user:", userError?.message);
+        console.error("❌ Failed to fetch user:", userError?.message);
         return navigate("/client-login");
       }
 
@@ -32,15 +35,18 @@ const DashboardLayout = () => {
         .maybeSingle();
 
       if (customerError || !customer) {
-        console.error("Customer not found.");
+        console.error("❌ Customer record not found:", customerError?.message);
         return navigate("/client-login");
       }
+
+      console.log("✅ user:", user);
+      console.log("✅ customer:", customer);
 
       if (customer.is_admin) {
         return navigate("/admin/dashboard");
       }
 
-      // Optionally redirect to complete profile
+      // Optionally redirect to complete registration
       // if (!customer.profile_complete) {
       //   return navigate("/register-complete");
       // }
@@ -48,7 +54,7 @@ const DashboardLayout = () => {
       setLoading(false);
     };
 
-    checkAccess();
+    verifyAccess();
   }, [navigate]);
 
   if (loading) return <div className="p-6">Loading dashboard...</div>;
