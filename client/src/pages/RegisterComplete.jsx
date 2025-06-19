@@ -30,6 +30,19 @@ const RegisterComplete = () => {
         return;
       }
 
+      // Try to load pending profile from localStorage (Google flow)
+      const pending = localStorage.getItem("pendingProfile");
+      if (pending) {
+        try {
+          const parsed = JSON.parse(pending);
+          setName(parsed.name || "");
+          setPhone(parsed.phone || "");
+          setAddress(parsed.address || "");
+        } catch {
+          console.warn("Corrupted pending profile.");
+        }
+      }
+
       setEmail(user.email ?? "");
       setPhone(user.phone ?? "");
       setLoading(false);
@@ -52,8 +65,8 @@ const RegisterComplete = () => {
         phone,
         email,
         address,
+        is_admin: false,
         profile_complete: true,
-        // Do NOT manually insert customer_id — the trigger handles it
       },
     ]);
 
@@ -64,6 +77,7 @@ const RegisterComplete = () => {
       return;
     }
 
+    localStorage.removeItem("pendingProfile");
     navigate("/dashboard");
   };
 

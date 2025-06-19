@@ -12,24 +12,28 @@ export default function AdminLogin() {
     e.preventDefault();
     setErrorMsg("");
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
       setErrorMsg("Login failed: " + error.message);
       return;
     }
 
-    const userEmail = data?.user?.email;
-    if (userEmail !== "astephens@fcphotohouston.com") {
-      setErrorMsg("Unauthorized admin email.");
+    const userId = data?.user?.id;
+
+    const { data: customer, error: customerError } = await supabase
+      .from("customers")
+      .select("is_admin")
+      .eq("user_id", userId)
+      .single();
+
+    if (customerError || !customer?.is_admin) {
+      setErrorMsg("Unauthorized access.");
       await supabase.auth.signOut();
       return;
     }
 
-    navigate("/dashboard");
+    navigate("/admin/dashboard");
   };
 
   return (

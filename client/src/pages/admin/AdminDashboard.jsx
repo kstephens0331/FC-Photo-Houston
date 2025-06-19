@@ -10,10 +10,17 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     const fetchCustomers = async () => {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user || user.email !== "astephens@fcphotohouston.com") {
-        navigate("/"); // redirect if not admin
-        return;
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return navigate("/");
+
+      const { data: customer, error: customerError } = await supabase
+        .from("customers")
+        .select("is_admin")
+        .eq("user_id", user.id)
+        .single();
+
+      if (customerError || !customer?.is_admin) {
+        return navigate("/");
       }
 
       const { data, error } = await supabase

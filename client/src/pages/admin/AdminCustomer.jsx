@@ -29,18 +29,52 @@ export default function AdminCustomer() {
     fetchCustomer();
   }, [id]);
 
-  // Upload logic
+  // Upload photos and handle session creation
   const handleUpload = async () => {
     if (!files.length || !sessionId) {
       setStatus("Missing files or session ID.");
       return;
     }
 
+    setStatus("Preparing...");
+
+    // 1. Check if photo_sessions entry exists
+    const { data: existingSession, error: sessionCheckError } = await supabase
+      .from("photo_sessions")
+      .select("id")
+      .eq("session_id", sessionId)
+      .eq("customer_id", customer.id)
+      .maybeSingle();
+
+    if (sessionCheckError) {
+      console.error("Session check failed:", sessionCheckError);
+      setStatus("Failed to verify session.");
+      return;
+    }
+
+    // 2. If not, insert new photo_sessions record
+    if (!existingSession) {
+      const { error: insertError } = await supabase
+        .from("photo_sessions")
+        .insert({
+          session_id: sessionId,
+          customer_id: customer.id,
+        });
+
+      if (insertError) {
+        console.error("Session creation failed:", insertError);
+        setStatus("Failed to create photo session.");
+        return;
+      }
+    }
+
+    // 3. Upload files to storage and insert into customer_photos
     setStatus("Uploading...");
+
     for (const file of files) {
       const filePath = `${sessionId}/${uuidv4()}-${file.name}`;
 
-      const { data, error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from("customer-photos")
         .upload(filePath, file);
 
@@ -103,6 +137,7 @@ export default function AdminCustomer() {
       <button
         onClick={handleUpload}
         className="bg-black text-white px-4 py-2 rounded hover:bg-gray-800"
+        disabled={!files.length || !sessionId}
       >
         Upload
       </button>

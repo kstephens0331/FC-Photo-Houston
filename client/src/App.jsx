@@ -26,6 +26,8 @@ import AdminLogin from './pages/admin/AdminLogin';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminCustomer from './pages/admin/AdminCustomer';
 import { AuthProvider } from "./context/AuthContext";
+import AdminSessions from "./pages/admin/AdminSessions";
+
 
 // 🔐 Admin Auth Wrapper — left unchanged
 const AdminRoute = ({ children }) => {
@@ -91,6 +93,7 @@ const App = () => {
               </AdminRoute>
             }
           />
+          <Route path="/admin/sessions" element={<AdminSessions />} />
 
           {/* 404 */}
           <Route path="*" element={<NotFound />} />
