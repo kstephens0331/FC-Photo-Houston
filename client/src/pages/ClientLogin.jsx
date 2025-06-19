@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 export default function ClientLogin() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [showLogin, setShowLogin] = useState(false);
 
   useEffect(() => {
     const checkSession = async () => {
@@ -12,7 +13,8 @@ export default function ClientLogin() {
       const user = sessionData?.session?.user;
 
       if (!user) {
-        setLoading(false); // No session, show login button
+        setLoading(false);
+        setShowLogin(true); // no session → show login
         return;
       }
 
@@ -23,16 +25,18 @@ export default function ClientLogin() {
         .single();
 
       if (error || !customer) {
-        console.warn("No customer record found. Logging out.");
-        await supabase.auth.signOut();
-        return navigate("/client-login");
+        console.warn("⚠️ No customer record found — staying on login page.");
+        setShowLogin(true); // allow Google login again
+        setLoading(false);
+        return;
       }
 
+      // ✅ Valid customer
       if (customer.is_admin) {
         return navigate("/admin/dashboard");
       }
 
-      navigate("/dashboard");
+      return navigate("/dashboard");
     };
 
     checkSession();
@@ -42,7 +46,7 @@ export default function ClientLogin() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: window.location.origin + "/client-login", // redirect to self
+        redirectTo: window.location.origin + "/client-login",
       },
     });
 
@@ -53,9 +57,7 @@ export default function ClientLogin() {
 
   if (loading) {
     return (
-      <div className="p-6 text-center text-gray-700">
-        Checking session...
-      </div>
+      <div className="p-6 text-center text-gray-600">Checking session...</div>
     );
   }
 
@@ -63,24 +65,20 @@ export default function ClientLogin() {
     <div className="max-w-md mx-auto mt-20 p-6 border rounded-lg shadow bg-white text-center">
       <h2 className="text-2xl font-bold mb-6">Login to FC Photo Houston</h2>
 
-      <button
-        onClick={handleGoogleLogin}
-        className="w-full py-3 border border-black text-black rounded-lg hover:bg-gray-100 transition"
-      >
-        Sign in with Google
-      </button>
+      {showLogin && (
+        <button
+          onClick={handleGoogleLogin}
+          className="w-full py-3 border border-black text-black rounded-lg hover:bg-gray-100 transition"
+        >
+          Sign in with Google
+        </button>
+      )}
 
-   
-      <button
-        onClick={async () => {
-          await supabase.auth.signOut();
-          window.location.reload();
-        }}
-        className="text-sm text-red-600 underline mt-4"
-      >
-        Force Sign Out
-      </button>
-      /
+      {!showLogin && (
+        <div className="text-red-600 text-sm">
+          We're unable to log you in. Please try again or contact support.
+        </div>
+      )}
     </div>
   );
 }
