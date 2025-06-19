@@ -4,20 +4,20 @@ import { useNavigate } from "react-router-dom";
 
 export default function ClientLogin() {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-  const [showLogin, setShowLogin] = useState(false);
+  const [status, setStatus] = useState("checking"); // checking, login, error
 
+  // Check for existing session and redirect if valid
   useEffect(() => {
     const checkSession = async () => {
       const { data: sessionData } = await supabase.auth.getSession();
       const user = sessionData?.session?.user;
 
       if (!user) {
-        setLoading(false);
-        setShowLogin(true); // no session → show login
+        setStatus("login");
         return;
       }
 
+      // Check customer record
       const { data: customer, error } = await supabase
         .from("customers")
         .select("is_admin")
@@ -25,18 +25,18 @@ export default function ClientLogin() {
         .single();
 
       if (error || !customer) {
-        console.warn("⚠️ No customer record found — staying on login page.");
-        setShowLogin(true); // allow Google login again
-        setLoading(false);
+        console.warn("⚠️ No matching customer record, signing out.");
+        await supabase.auth.signOut();
+        setStatus("login");
         return;
       }
 
-      // ✅ Valid customer
+      // Redirect based on role
       if (customer.is_admin) {
         return navigate("/admin/dashboard");
+      } else {
+        return navigate("/dashboard");
       }
-
-      return navigate("/dashboard");
     };
 
     checkSession();
@@ -51,21 +51,20 @@ export default function ClientLogin() {
     });
 
     if (error) {
-      console.error("Google sign-in error:", error.message);
+      console.error("Google login failed:", error.message);
+      setStatus("error");
     }
   };
-
-  if (loading) {
-    return (
-      <div className="p-6 text-center text-gray-600">Checking session...</div>
-    );
-  }
 
   return (
     <div className="max-w-md mx-auto mt-20 p-6 border rounded-lg shadow bg-white text-center">
       <h2 className="text-2xl font-bold mb-6">Login to FC Photo Houston</h2>
 
-      {showLogin && (
+      {status === "checking" && (
+        <div className="text-gray-600">Checking session...</div>
+      )}
+
+      {status === "login" && (
         <button
           onClick={handleGoogleLogin}
           className="w-full py-3 border border-black text-black rounded-lg hover:bg-gray-100 transition"
@@ -74,9 +73,9 @@ export default function ClientLogin() {
         </button>
       )}
 
-      {!showLogin && (
-        <div className="text-red-600 text-sm">
-          We're unable to log you in. Please try again or contact support.
+      {status === "error" && (
+        <div className="text-red-600 mt-4">
+          Something went wrong. Please try again later.
         </div>
       )}
     </div>
