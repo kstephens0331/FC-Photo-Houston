@@ -10,23 +10,22 @@ const CustomerRegistration = () => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleGoogleRegister = async () => {
-    setLoading(true);
-    const { error: signInError } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: window.location.origin + "/post-login",
-      },
-    });
+const handleGoogleRegister = async () => {
+  setLoading(true);
+  const { error: signInError } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: window.location.origin + "/dashboard",
+    },
+  });
 
-    if (signInError) {
-      setError("Google sign-in failed.");
-      setLoading(false);
-    } else {
-      localStorage.setItem("pendingProfile", JSON.stringify(form));
-    }
-  };
-
+  if (signInError) {
+    setError("Google sign-in failed.");
+    setLoading(false);
+  } else {
+    localStorage.setItem("pendingProfile", JSON.stringify(form));
+  }
+};
   return (
     <div className="max-w-md mx-auto p-6 mt-10 bg-white shadow-xl rounded-xl">
       <h2 className="text-2xl font-bold mb-4 text-center">Create Your Account</h2>

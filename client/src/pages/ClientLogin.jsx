@@ -12,18 +12,18 @@ const ClientLogin = () => {
   const [step, setStep] = useState("start");
   const [error, setError] = useState("");
 
-  const handleGoogleLogin = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: window.location.origin + "/post-login",
-      },
-    });
+const handleGoogleLogin = async () => {
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: window.location.origin + "/dashboard",
+    },
+  });
 
-    if (error) {
-      console.error('Google sign-in error:', error.message);
-    }
-  };
+  if (error) {
+    console.error('Google sign-in error:', error.message);
+  }
+};
 
   const handleEmailLogin = async () => {
     const { error } = await supabase.auth.signInWithPassword({
