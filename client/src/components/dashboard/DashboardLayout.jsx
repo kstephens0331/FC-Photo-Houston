@@ -3,8 +3,10 @@ import { Link, Outlet, useNavigate } from "react-router-dom";
 import { FiMenu, FiLogOut } from "react-icons/fi";
 import { supabase } from "../../utils/supabaseClient";
 
+
 const DashboardLayout = () => {
   const [loading, setLoading] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();
 
   console.log("🧭 DashboardLayout loaded");
