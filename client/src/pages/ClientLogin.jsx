@@ -13,18 +13,22 @@ const ClientLogin = () => {
   const [error, setError] = useState("");
 
 const handleGoogleLogin = async () => {
+  const redirectUrl = window.location.origin + "/dashboard";
+  console.log("🔁 Google login clicked, redirecting to:", redirectUrl);
+  alert("Signing in with Google...");
+
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: window.location.origin + "/dashboard",
+      redirectTo: redirectUrl,
     },
   });
 
   if (error) {
     console.error('Google sign-in error:', error.message);
+    alert("Google sign-in failed: " + error.message);
   }
 };
-
   const handleEmailLogin = async () => {
     const { error } = await supabase.auth.signInWithPassword({
       email,
