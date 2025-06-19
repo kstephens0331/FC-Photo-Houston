@@ -1,36 +1,49 @@
 import { useEffect, useState } from "react";
-import { supabase } from "../../utils/supabaseClient";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "../../utils/supabaseClient";
 
 export default function AdminDashboard() {
-  const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [customers, setCustomers] = useState([]);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchCustomers = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return navigate("/");
+    const checkAdminAccessAndLoad = async () => {
+      const {
+        data: { session },
+        error: sessionError
+      } = await supabase.auth.getSession();
+
+      if (sessionError || !session) {
+        return navigate("/client-login");
+      }
+
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        console.error("User fetch failed:", userError?.message);
+        return navigate("/client-login");
+      }
 
       const { data: customer, error: customerError } = await supabase
         .from("customers")
         .select("is_admin")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
-      if (customerError || !customer?.is_admin) {
-        return navigate("/");
+      if (customerError || !customer || !customer.is_admin) {
+        console.warn("Access denied — not admin.");
+        return navigate("/client-login");
       }
 
-      const { data, error } = await supabase
+      const { data, error: customerListError } = await supabase
         .from("customers")
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (error) {
-        setError("Could not fetch customers.");
-        console.error(error.message);
+      if (customerListError) {
+        setError("Could not load customers.");
+        console.error(customerListError.message);
       } else {
         setCustomers(data);
       }
@@ -38,11 +51,11 @@ export default function AdminDashboard() {
       setLoading(false);
     };
 
-    fetchCustomers();
+    checkAdminAccessAndLoad();
   }, [navigate]);
 
-  if (loading) return <div className="p-4">Loading customers...</div>;
-  if (error) return <div className="p-4 text-red-500">{error}</div>;
+  if (loading) return <div className="p-6">Loading admin dashboard...</div>;
+  if (error) return <div className="p-6 text-red-600">{error}</div>;
 
   return (
     <div className="p-6">
@@ -65,7 +78,9 @@ export default function AdminDashboard() {
               <td className="px-4 py-2">{c.name || "—"}</td>
               <td className="px-4 py-2">{c.email}</td>
               <td className="px-4 py-2">{c.phone || "—"}</td>
-              <td className="px-4 py-2">{new Date(c.created_at).toLocaleDateString()}</td>
+              <td className="px-4 py-2">
+                {new Date(c.created_at).toLocaleDateString()}
+              </td>
               <td className="px-4 py-2">
                 <button
                   onClick={() => navigate(`/admin/customer/${c.id}`)}
