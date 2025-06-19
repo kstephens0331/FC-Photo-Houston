@@ -30,12 +30,14 @@ import AdminSessions from "./pages/admin/AdminSessions";
 // 🔐 Admin Auth Wrapper — left unchanged
 const CustomerRoute = ({ children }) => {
   const { user, loading } = useAuth();
+  console.log("🔐 CustomerRoute:", { loading, user });
   if (loading) return <div className="p-6">Checking login...</div>;
   return user ? children : <Navigate to="/client-login" replace />;
 };
 
 const AdminRoute = ({ children }) => {
   const { user, loading } = useAuth();
+  console.log("🔐 CustomerRoute:", { loading, user });
   if (loading) return <div className="p-6">Checking admin auth...</div>;
   return user ? children : <Navigate to="/client-login" replace />;
 };

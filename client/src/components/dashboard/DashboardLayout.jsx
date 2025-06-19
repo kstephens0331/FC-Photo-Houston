@@ -7,6 +7,8 @@ const DashboardLayout = () => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
+  console.log("🧭 DashboardLayout loaded");
+
   useEffect(() => {
     const verifyAccess = async () => {
       console.log("🔁 Loading dashboard layout...");
