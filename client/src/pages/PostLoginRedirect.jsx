@@ -9,32 +9,60 @@ const PostLoginRedirect = () => {
   useEffect(() => {
     const finalizeLogin = async () => {
       const hasAuthCode = location.search.includes("code=");
+      if (!hasAuthCode) return navigate("/client-login");
 
-      if (!hasAuthCode) {
-        console.warn("No auth code in URL — skipping token exchange");
+      // Exchange OAuth code
+      const { error: exchangeError } = await supabase.auth.exchangeCodeForSession();
+      if (exchangeError) {
+        console.error("OAuth exchange failed:", exchangeError.message);
         return navigate("/client-login");
       }
 
-      // Step 1: Try to exchange the code for a session
-      const { error } = await supabase.auth.exchangeCodeForSession();
-      if (error) {
-        console.error("OAuth exchange failed:", error.message);
-        return navigate("/client-login");
-      }
-
-      // Step 2: Get the new session
+      // Get session
       const {
-        data: { session },
+        data: { user },
         error: sessionError,
-      } = await supabase.auth.getSession();
+      } = await supabase.auth.getUser();
 
-      if (sessionError || !session) {
+      if (sessionError || !user) {
         console.error("Session not found after exchange.");
         return navigate("/client-login");
       }
 
-      // ✅ Step 3: Session exists — now clean up the URL and redirect
-      window.history.replaceState({}, document.title, "/dashboard");
+      // Check if customer exists
+      const { data: existingCustomer, error: fetchError } = await supabase
+        .from("customers")
+        .select("*")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      // If not, insert a record for this new user
+      if (!existingCustomer) {
+        const { error: insertError } = await supabase.from("customers").insert({
+          user_id: user.id,
+          email: user.email,
+          is_admin: false,
+          profile_complete: false,
+        });
+
+        if (insertError) {
+          console.error("Error inserting customer record:", insertError.message);
+          return navigate("/client-login");
+        }
+      }
+
+      // Check if admin
+      const { data: customerCheck } = await supabase
+        .from("customers")
+        .select("is_admin")
+        .eq("user_id", user.id)
+        .single();
+
+      if (customerCheck?.is_admin) {
+        return navigate("/admin/dashboard");
+      } else {
+        return navigate("/dashboard");
+      }
     };
 
     finalizeLogin();

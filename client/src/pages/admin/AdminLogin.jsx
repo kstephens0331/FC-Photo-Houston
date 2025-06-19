@@ -12,27 +12,38 @@ export default function AdminLogin() {
     e.preventDefault();
     setErrorMsg("");
 
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    // Step 1: Sign in
+    const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-    if (error) {
-      setErrorMsg("Login failed: " + error.message);
+    if (signInError) {
+      setErrorMsg("Login failed: " + signInError.message);
       return;
     }
 
-    const userId = data?.user?.id;
+    const userId = authData?.user?.id;
 
-    const { data: customer, error: customerError } = await supabase
+    if (!userId) {
+      setErrorMsg("No user session found.");
+      return;
+    }
+
+    // Step 2: Check if this user is an admin
+    const { data: customer, error: roleError } = await supabase
       .from("customers")
       .select("is_admin")
       .eq("user_id", userId)
       .single();
 
-    if (customerError || !customer?.is_admin) {
-      setErrorMsg("Unauthorized access.");
+    if (roleError || !customer?.is_admin) {
+      setErrorMsg("Unauthorized: Admin access required.");
       await supabase.auth.signOut();
       return;
     }
 
+    // Step 3: Redirect to admin dashboard
     navigate("/admin/dashboard");
   };
 
@@ -62,7 +73,7 @@ export default function AdminLogin() {
         >
           Login
         </button>
-        {errorMsg && <p className="text-red-500">{errorMsg}</p>}
+        {errorMsg && <p className="text-red-500 text-sm text-center mt-2">{errorMsg}</p>}
       </form>
     </div>
   );

@@ -15,7 +15,7 @@ const CustomerRegistration = () => {
     const { error: signInError } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: window.location.origin + "/register-complete",
+        redirectTo: window.location.origin + "/dashboard",
       },
     });
 
