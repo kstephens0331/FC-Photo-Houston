@@ -3,76 +3,49 @@ import { Link, Outlet, useNavigate } from "react-router-dom";
 import { FiMenu, FiLogOut } from "react-icons/fi";
 import { supabase } from "../../utils/supabaseClient";
 
-
 const DashboardLayout = () => {
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();
 
-  console.log("🧭 DashboardLayout loaded");
-
   const handleLogout = async () => {
-  const { error } = await supabase.auth.signOut();
-  if (error) {
-    console.error("Logout failed:", error.message);
-  } else {
-    window.location.href = "/"; // Redirect to homepage after logout
-  }
-};
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error("Logout failed:", error.message);
+    } else {
+      window.location.href = "/";
+    }
+  };
 
   useEffect(() => {
-    const verifyAccess = async () => {
-      console.log("🔁 Loading dashboard layout...");
+    const checkRedirect = async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const user = sessionData?.session?.user;
 
-      const {
-        data: { session },
-        error: sessionError
-      } = await supabase.auth.getSession();
+      if (!user) return navigate("/client-login");
 
-      if (sessionError || !session) {
-        console.warn("❌ No active session");
-        return navigate("/client-login");
-      }
-
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-
-      if (userError || !user) {
-        console.error("❌ Failed to fetch user:", userError?.message);
-        return navigate("/client-login");
-      }
-
-      const { data: customer, error: customerError } = await supabase
+      const { data: customer, error } = await supabase
         .from("customers")
-        .select("is_admin, profile_complete")
+        .select("is_admin")
         .eq("user_id", user.id)
-        .maybeSingle();
+        .single();
 
-      if (customerError || !customer) {
-        console.error("❌ Customer record not found:", customerError?.message);
+      if (error || !customer) {
+        console.error("Customer lookup failed:", error?.message);
         return navigate("/client-login");
       }
-
-      console.log("✅ user:", user);
-      console.log("✅ customer:", customer);
 
       if (customer.is_admin) {
         return navigate("/admin/dashboard");
       }
 
-      // Optionally redirect to complete registration
-      // if (!customer.profile_complete) {
-      //   return navigate("/register-complete");
-      // }
-
       setLoading(false);
     };
 
-    verifyAccess();
+    checkRedirect();
   }, [navigate]);
 
   if (loading) return <div className="p-6">Loading dashboard...</div>;
-
-  
 
   return (
     <div className="min-h-screen flex bg-white text-black">
