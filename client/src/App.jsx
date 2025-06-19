@@ -70,6 +70,7 @@ const App = () => {
             <Route path="favorites" element={<Favorites />} />
             <Route path="quotes" element={<Quotes />} />
             <Route path="settings" element={<Settings />} />
+            <Route path="/gallery" element={<CustomerRoute><CustomerGallery /></CustomerRoute>} />
           </Route>
 
           {/* 🔐 Admin Routes */}
