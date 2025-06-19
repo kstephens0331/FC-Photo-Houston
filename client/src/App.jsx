@@ -10,6 +10,7 @@ import ClientGallery from "./pages/ClientGallery";
 import Favorites from "./components/dashboard/Favorites";
 import Quotes from "./components/dashboard/Quotes";
 import Settings from "./components/dashboard/Settings";
+import CustomerGallery from "./pages/ClientGallery";
 
 // Public Pages
 import Home from './pages/Home';
@@ -78,7 +79,7 @@ const App = () => {
             <Route path="favorites" element={<Favorites />} />
             <Route path="quotes" element={<Quotes />} />
             <Route path="settings" element={<Settings />} />
-            <Route path="/gallery" element={<CustomerRoute><CustomerGallery /></CustomerRoute>} />
+              <Route path="gallery" element={<CustomerGallery />} />
           </Route>
 
           {/* 🔐 Admin Routes */}
