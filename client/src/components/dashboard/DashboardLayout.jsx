@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
-import { supabase } from "../utils/supabaseClient";
-import Sidebar from "../components/Sidebar";
+import { supabase } from "../../utils/supabaseClient";
 import { FiLogOut } from "react-icons/fi";
 
 export default function DashboardLayout() {
