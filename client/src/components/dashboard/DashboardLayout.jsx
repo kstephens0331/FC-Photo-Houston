@@ -19,15 +19,15 @@ const DashboardLayout = () => {
 
   useEffect(() => {
   const checkRedirect = async () => {
-    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    const { data: sessionData } = await supabase.auth.getSession();
     const user = sessionData?.session?.user;
 
-    if (!user || sessionError) {
-      console.warn("No user found, redirecting...");
+    // ✅ Defensive check
+    if (!user || !user.id) {
+      console.warn("Missing or invalid user ID, redirecting...");
       return navigate("/client-login");
     }
 
-    // ✅ Only run the query if user.id exists
     const { data: customer, error } = await supabase
       .from("customers")
       .select("is_admin")
