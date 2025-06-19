@@ -13,19 +13,32 @@ export default function AdminCustomer() {
 
   useEffect(() => {
     const loadCustomer = async () => {
-      const { data, error } = await supabase
+      console.log("🔍 Looking up customer with id:", id);
+
+      // First try matching by Supabase `id`
+      let { data, error } = await supabase
         .from("customers")
         .select("*")
         .eq("id", id)
         .maybeSingle();
 
+      if (!data) {
+        // Fallback: try matching by `customer_id` (numeric/serial)
+        const fallback = await supabase
+          .from("customers")
+          .select("*")
+          .eq("customer_id", id)
+          .maybeSingle();
+
+        data = fallback.data;
+        error = fallback.error;
+      }
+
       if (error || !data) {
-        console.error("Failed to load customer:", error?.message);
+        console.error("❌ Customer not found:", error?.message);
+        setCustomer(null);
       } else {
         setCustomer(data);
-        // Optionally auto-generate session ID:
-        // const autoSession = `${data.name?.toLowerCase().replace(/\s+/g, "-")}-${Date.now()}`;
-        // setSessionId(autoSession);
       }
 
       setLoading(false);
@@ -42,7 +55,6 @@ export default function AdminCustomer() {
 
     setUploading(true);
 
-    // Ensure session exists
     const { error: sessionErr } = await supabase
       .from("photo_sessions")
       .insert([{ session_id: sessionId, user_id: customer.id }])
