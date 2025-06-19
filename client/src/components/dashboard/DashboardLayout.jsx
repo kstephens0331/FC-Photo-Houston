@@ -18,32 +18,36 @@ const DashboardLayout = () => {
   };
 
   useEffect(() => {
-    const checkRedirect = async () => {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const user = sessionData?.session?.user;
+  const checkRedirect = async () => {
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    const user = sessionData?.session?.user;
 
-      if (!user) return navigate("/client-login");
+    if (!user || sessionError) {
+      console.warn("No user found, redirecting...");
+      return navigate("/client-login");
+    }
 
-      const { data: customer, error } = await supabase
-        .from("customers")
-        .select("is_admin")
-        .eq("user_id", user.id)
-        .single();
+    // ✅ Only run the query if user.id exists
+    const { data: customer, error } = await supabase
+      .from("customers")
+      .select("is_admin")
+      .eq("user_id", user.id)
+      .single();
 
-      if (error || !customer) {
-        console.error("Customer lookup failed:", error?.message);
-        return navigate("/client-login");
-      }
+    if (error || !customer) {
+      console.error("Customer lookup failed:", error?.message);
+      return navigate("/client-login");
+    }
 
-      if (customer.is_admin) {
-        return navigate("/admin/dashboard");
-      }
+    if (customer.is_admin) {
+      return navigate("/admin/dashboard");
+    }
 
-      setLoading(false);
-    };
+    setLoading(false);
+  };
 
-    checkRedirect();
-  }, [navigate]);
+  checkRedirect();
+}, [navigate]);
 
   if (loading) return <div className="p-6">Loading dashboard...</div>;
 
