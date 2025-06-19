@@ -2,6 +2,7 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import { AuthProvider, useAuth } from './context/AuthContext';
 
 // Customer Dashboard Pages
 import DashboardLayout from './components/dashboard/DashboardLayout';
@@ -24,7 +25,6 @@ import NotFound from './pages/NotFound';
 import AdminLogin from './pages/admin/AdminLogin';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminCustomer from './pages/admin/AdminCustomer';
-import { useAuth } from "./context/AuthContext";
 import AdminSessions from "./pages/admin/AdminSessions";
 
 
