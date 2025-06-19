@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
-import { supabase } from "../../utils/supabaseClient";
+import { supabase } from "../utils/supabaseClient";
 import Sidebar from "../../components/admin/AdminSidebar";
 import { FiLogOut } from "react-icons/fi";
 
