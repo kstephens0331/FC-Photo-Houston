@@ -23,6 +23,7 @@ import NotFound from './pages/NotFound';
 // Admin Portal Pages
 import AdminLogin from './pages/admin/AdminLogin';
 import AdminLayout from "./layouts/AdminLayout";
+import AdminDashboard from "./admin/AdminDashboard";
 
 
 
