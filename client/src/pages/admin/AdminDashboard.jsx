@@ -9,39 +9,32 @@ export default function AdminDashboard() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const loadCustomers = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+  const checkRedirect = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return navigate("/client-login");
+    }
 
-      if (!session) return navigate("/client-login");
+    const { data: customer, error } = await supabase
+      .from("customers")
+      .select("is_admin, profile_complete")
+      .eq("user_id", user.id)
+      .single();
 
-      const { data: user } = await supabase.auth.getUser();
-      const { data: customer, error: accessError } = await supabase
-        .from("customers")
-        .select("is_admin")
-        .eq("user_id", user.id)
-        .maybeSingle();
+    if (error || !customer) {
+      return navigate("/client-login");
+    }
 
-      if (accessError || !customer?.is_admin) return navigate("/client-login");
+    // ✅ Redirect admins to admin dashboard — but not from admin page itself
+    if (customer.is_admin && !window.location.pathname.startsWith("/admin")) {
+      return navigate("/admin/dashboard");
+    }
 
-      const { data, error: customerError } = await supabase
-        .from("customers")
-        .select("*")
-        .order("created_at", { ascending: false });
+    setLoading(false);
+  };
 
-      if (customerError) {
-        setError("Could not load customers.");
-        console.error(customerError.message);
-      } else {
-        setCustomers(data);
-      }
-
-      setLoading(false);
-    };
-
-    loadCustomers();
-  }, [navigate]);
+  checkRedirect();
+}, [navigate]);
 
   if (loading) return <div className="p-6">Loading customers...</div>;
   if (error) return <div className="p-6 text-red-600">{error}</div>;

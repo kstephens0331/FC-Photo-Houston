@@ -13,7 +13,7 @@ const DashboardLayout = () => {
     if (error) {
       console.error("Logout failed:", error.message);
     } else {
-      window.location.href = "/";
+      window.location.href = "/client-login";
     }
   };
 
