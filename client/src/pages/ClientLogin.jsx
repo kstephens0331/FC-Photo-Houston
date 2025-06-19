@@ -1,160 +1,69 @@
-import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { supabase } from "../utils/supabaseClient";
+import { useNavigate } from "react-router-dom";
 
-const ClientLogin = () => {
+export default function ClientLogin() {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
 
-  const [phone, setPhone] = useState("");
-  const [otp, setOtp] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [step, setStep] = useState("start");
-  const [error, setError] = useState("");
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const user = sessionData?.session?.user;
 
-const handleGoogleLogin = async () => {
-  const redirectUrl = window.location.origin + "/dashboard";
-  console.log("🔁 Google login clicked, redirecting to:", redirectUrl);
-  alert("Signing in with Google...");
+      if (!user) {
+        setLoading(false); // no user yet — show login button
+        return;
+      }
 
-  const { error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      redirectTo: redirectUrl,
-    },
-  });
+      const { data: customer, error } = await supabase
+        .from("customers")
+        .select("is_admin")
+        .eq("user_id", user.id)
+        .single();
 
-  if (error) {
-    console.error('Google sign-in error:', error.message);
-    alert("Google sign-in failed: " + error.message);
+      if (error || !customer) {
+        console.error("Customer lookup failed:", error?.message);
+        return;
+      }
+
+      if (customer.is_admin) {
+        return navigate("/admin/dashboard");
+      } else {
+        return navigate("/dashboard");
+      }
+    };
+
+    checkSession();
+  }, [navigate]);
+
+  const handleGoogleLogin = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: window.location.origin + "/client-login", // stay on same page
+      },
+    });
+
+    if (error) {
+      console.error("Google sign-in error:", error.message);
+    }
+  };
+
+  if (loading) {
+    return <div className="p-6 text-center">Checking session...</div>;
   }
-};
-  const handleEmailLogin = async () => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (error) {
-      console.error("Email login failed:", error.message);
-      setError("Invalid email or password.");
-    } else {
-      navigate("/dashboard");
-    }
-  };
-
-  const handleSendOtp = async () => {
-    const { error } = await supabase.auth.signInWithOtp({ phone });
-
-    if (error) {
-      setError("Failed to send code. Check your number.");
-    } else {
-      setStep("otp");
-    }
-  };
-
-  const handleVerifyOtp = async () => {
-    const { error } = await supabase.auth.verifyOtp({
-      phone,
-      token: otp,
-      type: "sms",
-    });
-
-    if (error) {
-      setError("Invalid code.");
-    } else {
-      navigate("/dashboard");
-    }
-  };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-16 bg-gray-100">
-      <div className="w-full max-w-md bg-white p-8 rounded-xl shadow-xl">
-        <h2 className="text-3xl font-bold text-center mb-6">Customer Login</h2>
+    <div className="max-w-md mx-auto mt-20 p-6 border rounded-lg shadow bg-white text-center">
+      <h2 className="text-2xl font-bold mb-6">Login to FC Photo Houston</h2>
 
-        {error && <div className="text-red-600 text-sm text-center mb-4">{error}</div>}
-
-        {step === "start" && (
-          <>
-            <input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full p-3 rounded-lg border border-gray-300 mb-3"
-            />
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full p-3 rounded-lg border border-gray-300 mb-4"
-            />
-            <button
-              onClick={handleEmailLogin}
-              className="w-full py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition mb-4"
-            >
-              Login with Email
-            </button>
-
-            <div className="text-center text-sm text-gray-500 mb-4">or</div>
-
-            <button
-              onClick={handleGoogleLogin}
-              className="w-full py-3 border border-black text-black rounded-lg hover:bg-gray-100 transition mb-4"
-            >
-              Sign in with Google
-            </button>
-
-            <input
-              type="tel"
-              placeholder="Phone Number"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              className="w-full p-3 rounded-lg border border-gray-300 mb-4"
-            />
-            <button
-              onClick={handleSendOtp}
-              className="w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition"
-            >
-              Send Code
-            </button>
-
-            <p className="text-sm text-center mt-4">
-              New here?{" "}
-              <Link to="/register" className="text-blue-600 hover:underline">
-                Register now
-              </Link>
-            </p>
-          </>
-        )}
-
-        {step === "otp" && (
-          <>
-            <input
-              type="text"
-              placeholder="Enter OTP"
-              value={otp}
-              onChange={(e) => setOtp(e.target.value)}
-              className="w-full p-3 rounded-lg border border-gray-300 mb-4"
-            />
-            <button
-              onClick={handleVerifyOtp}
-              className="w-full py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition"
-            >
-              Verify Code
-            </button>
-            <p
-              className="text-sm text-blue-600 text-center mt-3 cursor-pointer hover:underline"
-              onClick={() => setStep("start")}
-            >
-              Back to Login Options
-            </p>
-          </>
-        )}
-      </div>
+      <button
+        onClick={handleGoogleLogin}
+        className="w-full py-3 border border-black text-black rounded-lg hover:bg-gray-100 transition"
+      >
+        Sign in with Google
+      </button>
     </div>
   );
-};
-
-export default ClientLogin;
+}
