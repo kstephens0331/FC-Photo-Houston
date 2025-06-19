@@ -8,20 +8,31 @@ const DashboardLayout = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const checkRedirect = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+    const checkAccess = async () => {
+      const {
+        data: { session },
+        error: sessionError
+      } = await supabase.auth.getSession();
+
+      if (sessionError || !session) {
+        console.warn("No active session.");
         return navigate("/client-login");
       }
 
-      const { data: customer, error } = await supabase
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        console.error("Failed to fetch user:", userError?.message);
+        return navigate("/client-login");
+      }
+
+      const { data: customer, error: customerError } = await supabase
         .from("customers")
         .select("is_admin, profile_complete")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
-      if (error) {
-        console.error("Customer lookup failed:", error.message);
+      if (customerError || !customer) {
+        console.error("Customer not found.");
         return navigate("/client-login");
       }
 
@@ -29,7 +40,7 @@ const DashboardLayout = () => {
         return navigate("/admin/dashboard");
       }
 
-      // Optionally redirect new users to complete registration
+      // Optionally redirect to complete profile
       // if (!customer.profile_complete) {
       //   return navigate("/register-complete");
       // }
@@ -37,7 +48,7 @@ const DashboardLayout = () => {
       setLoading(false);
     };
 
-    checkRedirect();
+    checkAccess();
   }, [navigate]);
 
   if (loading) return <div className="p-6">Loading dashboard...</div>;

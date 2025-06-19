@@ -1,54 +1,38 @@
-import { createContext, useState, useEffect } from "react";
+// src/context/AuthContext.jsx
+import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "../utils/supabaseClient";
 
-export const AuthContext = createContext();
+const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const initAuth = async () => {
+    // Get session on load
+    const getSession = async () => {
       const { data, error } = await supabase.auth.getSession();
-      if (data?.session) {
-        setSession(data.session);
-        setUser(data.session.user);
-      }
-
-      // Clean up token from URL after OAuth login
-      if (window.location.hash.includes("access_token")) {
-        window.history.replaceState({}, document.title, window.location.pathname);
-      }
-
+      setUser(data?.session?.user ?? null);
       setLoading(false);
     };
 
-    initAuth();
+    getSession();
 
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        if (event === "SIGNED_IN") {
-          setSession(session);
-          setUser(session?.user ?? null);
-        } else if (event === "SIGNED_OUT") {
-          setSession(null);
-          setUser(null);
-        }
-
-        // ✅ Add this here to unblock CustomerRoute
-        setLoading(false);
-      }
-    );
+    // Subscribe to future auth changes
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
 
     return () => {
-      authListener?.subscription.unsubscribe();
+      listener?.subscription?.unsubscribe();
     };
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, session, loading }}>
-      {!loading && children}
+    <AuthContext.Provider value={{ user, loading }}>
+      {children}
     </AuthContext.Provider>
   );
 };
+
+export const useAuth = () => useContext(AuthContext);
