@@ -91,6 +91,7 @@ const App = () => {
   <Route path="/admin/session/create" element={<AdminSessionCreate />} />
   <Route path="/admin/photo-upload" element={<AdminPhotoUpload />} />
   <Route path="/admin/session/:sessionId" element={<AdminSessionDetails />} />
+  <Route path="/admin/customer/:id" element={<AdminCustomer />} />
 </Route>
 <Route path="/admin-login" element={<AdminLogin />} />
           {/* 404 */}
