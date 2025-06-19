@@ -12,7 +12,7 @@ export default function ClientLogin() {
       const user = sessionData?.session?.user;
 
       if (!user) {
-        setLoading(false); // no user yet — show login button
+        setLoading(false); // No session, show login button
         return;
       }
 
@@ -22,17 +22,17 @@ export default function ClientLogin() {
         .eq("user_id", user.id)
         .single();
 
-if (error || !customer) {
-  console.warn("No customer record found — logging out.");
-  await supabase.auth.signOut();
-  return navigate("/client-login");
-}
+      if (error || !customer) {
+        console.warn("No customer record found. Logging out.");
+        await supabase.auth.signOut();
+        return navigate("/client-login");
+      }
 
       if (customer.is_admin) {
         return navigate("/admin/dashboard");
-      } else {
-        return navigate("/dashboard");
       }
+
+      navigate("/dashboard");
     };
 
     checkSession();
@@ -42,7 +42,7 @@ if (error || !customer) {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: window.location.origin + "/client-login", // stay on same page
+        redirectTo: window.location.origin + "/client-login", // redirect to self
       },
     });
 
@@ -52,7 +52,11 @@ if (error || !customer) {
   };
 
   if (loading) {
-    return <div className="p-6 text-center">Checking session...</div>;
+    return (
+      <div className="p-6 text-center text-gray-700">
+        Checking session...
+      </div>
+    );
   }
 
   return (
@@ -65,6 +69,18 @@ if (error || !customer) {
       >
         Sign in with Google
       </button>
+
+   
+      <button
+        onClick={async () => {
+          await supabase.auth.signOut();
+          window.location.reload();
+        }}
+        className="text-sm text-red-600 underline mt-4"
+      >
+        Force Sign Out
+      </button>
+      /
     </div>
   );
 }
