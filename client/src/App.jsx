@@ -18,7 +18,6 @@ import Contact from './pages/Contact';
 import ClientLogin from './pages/ClientLogin';
 import CustomerRegistration from './pages/CustomerRegistration';
 import RegisterComplete from './pages/RegisterComplete';
-import PostLoginRedirect from './pages/PostLoginRedirect';
 import NotFound from './pages/NotFound';
 
 // Admin Portal Pages
@@ -55,7 +54,6 @@ const App = () => {
           <Route path="/client-login" element={<ClientLogin />} />
           <Route path="/register" element={<CustomerRegistration />} />
           <Route path="/register-complete" element={<RegisterComplete />} />
-          <Route path="/post-login" element={<PostLoginRedirect />} />
           
 
           {/* 🔐 Customer Dashboard */}
