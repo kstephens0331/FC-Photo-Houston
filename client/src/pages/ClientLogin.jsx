@@ -9,24 +9,22 @@ const ClientLogin = () => {
   const [otp, setOtp] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [step, setStep] = useState("start"); // 'start' | 'otp'
+  const [step, setStep] = useState("start");
   const [error, setError] = useState("");
 
-  // Google OAuth
-const handleGoogleLogin = async () => {
-  const { error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      redirectTo: 'https://fcphotohouston.com/post-login', // Make sure this matches the dashboard URL
-    },
-  });
+  const handleGoogleLogin = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin + "/post-login",
+      },
+    });
 
-  if (error) {
-    console.error('Google sign-in error:', error.message);
-  }
-};
+    if (error) {
+      console.error('Google sign-in error:', error.message);
+    }
+  };
 
-  // Email/password login
   const handleEmailLogin = async () => {
     const { error } = await supabase.auth.signInWithPassword({
       email,
@@ -41,7 +39,6 @@ const handleGoogleLogin = async () => {
     }
   };
 
-  // Phone OTP send
   const handleSendOtp = async () => {
     const { error } = await supabase.auth.signInWithOtp({ phone });
 
@@ -52,7 +49,6 @@ const handleGoogleLogin = async () => {
     }
   };
 
-  // Phone OTP verify
   const handleVerifyOtp = async () => {
     const { error } = await supabase.auth.verifyOtp({
       phone,
@@ -76,7 +72,6 @@ const handleGoogleLogin = async () => {
 
         {step === "start" && (
           <>
-            {/* Email login */}
             <input
               type="email"
               placeholder="Email"
@@ -100,7 +95,6 @@ const handleGoogleLogin = async () => {
 
             <div className="text-center text-sm text-gray-500 mb-4">or</div>
 
-            {/* Google login */}
             <button
               onClick={handleGoogleLogin}
               className="w-full py-3 border border-black text-black rounded-lg hover:bg-gray-100 transition mb-4"
@@ -108,7 +102,6 @@ const handleGoogleLogin = async () => {
               Sign in with Google
             </button>
 
-            {/* Phone login */}
             <input
               type="tel"
               placeholder="Phone Number"

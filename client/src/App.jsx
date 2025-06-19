@@ -76,24 +76,31 @@ const App = () => {
           </Route>
 
           {/* 🔐 Admin Routes */}
-          <Route path="/admin" element={<AdminLogin />} />
-          <Route
-            path="/admin/dashboard"
-            element={
-              <AdminRoute>
-                <AdminDashboard />
-              </AdminRoute>
-            }
-          />
-          <Route
-            path="/admin/customer/:id"
-            element={
-              <AdminRoute>
-                <AdminCustomer />
-              </AdminRoute>
-            }
-          />
-          <Route path="/admin/sessions" element={<AdminSessions />} />
+<Route path="/admin" element={<AdminLogin />} />
+<Route
+  path="/admin/dashboard"
+  element={
+    <AdminRoute>
+      <AdminDashboard />
+    </AdminRoute>
+  }
+/>
+<Route
+  path="/admin/customer/:id"
+  element={
+    <AdminRoute>
+      <AdminCustomer />
+    </AdminRoute>
+  }
+/>
+<Route
+  path="/admin/sessions"
+  element={
+    <AdminRoute>
+      <AdminSessions />
+    </AdminRoute>
+  }
+/>
 
           {/* 404 */}
           <Route path="*" element={<NotFound />} />
