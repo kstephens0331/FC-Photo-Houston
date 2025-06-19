@@ -11,6 +11,15 @@ const DashboardLayout = () => {
 
   console.log("🧭 DashboardLayout loaded");
 
+  const handleLogout = async () => {
+  const { error } = await supabase.auth.signOut();
+  if (error) {
+    console.error("Logout failed:", error.message);
+  } else {
+    window.location.href = "/"; // Redirect to homepage after logout
+  }
+};
+
   useEffect(() => {
     const verifyAccess = async () => {
       console.log("🔁 Loading dashboard layout...");
@@ -62,6 +71,8 @@ const DashboardLayout = () => {
   }, [navigate]);
 
   if (loading) return <div className="p-6">Loading dashboard...</div>;
+
+  
 
   return (
     <div className="min-h-screen flex bg-white text-black">
