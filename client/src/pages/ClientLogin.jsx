@@ -17,7 +17,7 @@ const handleGoogleLogin = async () => {
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: 'https://fcphotohouston.com/dashboard', // Make sure this matches the dashboard URL
+      redirectTo: 'https://fcphotohouston.com/post-login', // Make sure this matches the dashboard URL
     },
   });
 
