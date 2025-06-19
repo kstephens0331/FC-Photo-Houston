@@ -1,148 +1,134 @@
-import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 import { supabase } from "../../utils/supabaseClient";
-import { v4 as uuidv4 } from "uuid";
 
 export default function AdminCustomer() {
-  const { id } = useParams(); // this is the Supabase `customers.id`
+  const { id } = useParams();
   const [customer, setCustomer] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [sessionId, setSessionId] = useState("");
   const [files, setFiles] = useState([]);
-  const [status, setStatus] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [success, setSuccess] = useState(false);
 
-  // Fetch customer info
   useEffect(() => {
-    const fetchCustomer = async () => {
+    const loadCustomer = async () => {
       const { data, error } = await supabase
         .from("customers")
         .select("*")
         .eq("id", id)
-        .single();
+        .maybeSingle();
 
-      if (error) {
-        console.error("Error fetching customer:", error);
-        return;
+      if (error || !data) {
+        console.error("Failed to load customer:", error?.message);
+      } else {
+        setCustomer(data);
+        // Optionally auto-generate session ID:
+        // const autoSession = `${data.name?.toLowerCase().replace(/\s+/g, "-")}-${Date.now()}`;
+        // setSessionId(autoSession);
       }
-      setCustomer(data);
+
+      setLoading(false);
     };
 
-    fetchCustomer();
+    loadCustomer();
   }, [id]);
 
-  // Upload photos and handle session creation
   const handleUpload = async () => {
-    if (!files.length || !sessionId) {
-      setStatus("Missing files or session ID.");
+    if (!customer?.id || !sessionId || files.length === 0) {
+      alert("Missing session ID, files, or customer ID.");
       return;
     }
 
-    setStatus("Preparing...");
+    setUploading(true);
 
-    // 1. Check if photo_sessions entry exists
-    const { data: existingSession, error: sessionCheckError } = await supabase
+    // Ensure session exists
+    const { error: sessionErr } = await supabase
       .from("photo_sessions")
-      .select("id")
-      .eq("session_id", sessionId)
-      .eq("customer_id", customer.id)
+      .insert([{ session_id: sessionId, user_id: customer.id }])
+      .select()
       .maybeSingle();
 
-    if (sessionCheckError) {
-      console.error("Session check failed:", sessionCheckError);
-      setStatus("Failed to verify session.");
+    if (sessionErr && !sessionErr.message.includes("duplicate")) {
+      alert("Failed to create session.");
+      console.error(sessionErr);
+      setUploading(false);
       return;
     }
 
-    // 2. If not, insert new photo_sessions record
-    if (!existingSession) {
-      const { error: insertError } = await supabase
-        .from("photo_sessions")
-        .insert({
-          session_id: sessionId,
-          customer_id: customer.id,
+    for (let file of files) {
+      const fileName = `${customer.id}/${sessionId}/${Date.now()}-${file.name}`;
+      const { error: storageError } = await supabase.storage
+        .from("customer-photos")
+        .upload(fileName, file, {
+          cacheControl: "3600",
+          upsert: true,
         });
 
-      if (insertError) {
-        console.error("Session creation failed:", insertError);
-        setStatus("Failed to create photo session.");
-        return;
+      if (storageError) {
+        console.error("Upload error:", storageError);
+        continue;
       }
-    }
 
-    // 3. Upload files to storage and insert into customer_photos
-    setStatus("Uploading...");
-
-    for (const file of files) {
-      const filePath = `${sessionId}/${uuidv4()}-${file.name}`;
-
-      const { error: uploadError } = await supabase.storage
+      const { data: { publicUrl } } = supabase.storage
         .from("customer-photos")
-        .upload(filePath, file);
-
-      if (uploadError) {
-        console.error("Upload error:", uploadError);
-        setStatus("Upload failed.");
-        return;
-      }
-
-      const url = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/customer-photos/${filePath}`;
+        .getPublicUrl(fileName);
 
       await supabase.from("customer_photos").insert({
-        user_id: customer.user_id,
-        sessionId: sessionId,
-        file_url: url,
-        uploaded_at: new Date(),
+        user_id: customer.id,
+        session_id: sessionId,
+        file_url: publicUrl,
       });
     }
 
-    setStatus("Upload complete!");
+    setSuccess(true);
+    setUploading(false);
     setFiles([]);
+    setSessionId("");
   };
 
-  return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Manage Customer</h1>
+  if (loading) return <div className="p-6">Loading customer info...</div>;
+  if (!customer) return <div className="p-6 text-red-600">Customer not found.</div>;
 
-      {customer ? (
-        <div className="mb-6 space-y-1">
-          <p><strong>Customer ID:</strong> {customer.customer_id}</p>
-          <p><strong>Name:</strong> {customer.name}</p>
-          <p><strong>Email:</strong> {customer.email}</p>
-          <p><strong>Phone:</strong> {customer.phone}</p>
-        </div>
-      ) : (
-        <p>Loading customer info...</p>
-      )}
+  return (
+    <div className="p-6 max-w-2xl mx-auto bg-white shadow rounded">
+      <h1 className="text-2xl font-bold mb-2">Manage Customer</h1>
+      <p className="text-sm text-gray-600 mb-6">
+        Uploading for: <strong>{customer.name}</strong> ({customer.email})<br />
+        Customer ID: <span className="font-mono">{customer.customer_id || customer.id}</span>
+      </p>
 
       <div className="mb-4">
-        <label className="block font-semibold mb-1">Session ID</label>
+        <label className="block mb-1 font-medium">Session ID</label>
         <input
           type="text"
+          placeholder="e.g., may2025-family-session"
           value={sessionId}
           onChange={(e) => setSessionId(e.target.value)}
-          placeholder="e.g., may2025-family-session"
-          className="w-full border px-3 py-2 rounded"
+          className="w-full border p-2 rounded"
         />
       </div>
 
       <div className="mb-4">
-        <label className="block font-semibold mb-1">Upload Photos</label>
+        <label className="block mb-1 font-medium">Upload Photos</label>
         <input
           type="file"
           multiple
-          onChange={(e) => setFiles([...e.target.files])}
-          className="block"
+          onChange={(e) => setFiles(Array.from(e.target.files))}
         />
       </div>
 
       <button
         onClick={handleUpload}
-        className="bg-black text-white px-4 py-2 rounded hover:bg-gray-800"
-        disabled={!files.length || !sessionId}
+        disabled={uploading}
+        className="bg-black text-white px-6 py-2 rounded hover:bg-gray-800 disabled:opacity-50"
       >
-        Upload
+        {uploading ? "Uploading..." : "Upload"}
       </button>
 
-      {status && <p className="mt-4 text-sm">{status}</p>}
+      {success && (
+        <p className="text-green-600 mt-4">Photos uploaded successfully!</p>
+      )}
     </div>
   );
 }
