@@ -39,6 +39,20 @@ export default function AdminDashboard() {
   if (loading) return <div className="p-6">Loading customers...</div>;
   if (error) return <div className="p-6 text-red-600">{error}</div>;
 
+  const fetchCustomers = async () => {
+  const { data, error } = await supabase
+    .from("customers")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    setError("Failed to load customers");
+    console.error(error);
+  } else {
+    setCustomers(data);
+  }
+};
+
   return (
     <div>
       <h1 className="text-2xl font-bold mb-6">Customer Directory</h1>
