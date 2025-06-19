@@ -22,9 +22,8 @@ import NotFound from './pages/NotFound';
 
 // Admin Portal Pages
 import AdminLogin from './pages/admin/AdminLogin';
-import AdminDashboard from './pages/admin/AdminDashboard';
-import AdminCustomer from './pages/admin/AdminCustomer';
-import AdminSessions from "./pages/admin/AdminSessions";
+import AdminLayout from "./layouts/AdminLayout";
+
 
 
 // 🔐 Admin Auth Wrapper — left unchanged
@@ -74,32 +73,16 @@ const App = () => {
           </Route>
 
           {/* 🔐 Admin Routes */}
-<Route path="/admin" element={<AdminLogin />} />
-<Route
-  path="/admin/dashboard"
-  element={
-    <AdminRoute>
-      <AdminDashboard />
-    </AdminRoute>
-  }
-/>
-<Route
-  path="/admin/customer/:id"
-  element={
-    <AdminRoute>
-      <AdminCustomer />
-    </AdminRoute>
-  }
-/>
-<Route
-  path="/admin/sessions"
-  element={
-    <AdminRoute>
-      <AdminSessions />
-    </AdminRoute>
-  }
-/>
-
+<Route path="/admin" element={<AdminLayout />}>
+  <Route path="dashboard" element={<AdminDashboard />} />
+  <Route path="sessions" element={<AdminSessions />} />
+  <Route path="customers" element={<AdminCustomer />} />
+  <Route path="/admin/customer/:id/edit" element={<AdminCustomerEdit />} />
+  <Route path="/admin/session/create" element={<AdminSessionCreate />} />
+  <Route path="/admin/photo-upload" element={<AdminPhotoUpload />} />
+  <Route path="/admin/session/:sessionId" element={<AdminSessionDetails />} />
+</Route>
+<Route path="/admin-login" element={<AdminLogin />} />
           {/* 404 */}
           <Route path="*" element={<NotFound />} />
         </Routes>

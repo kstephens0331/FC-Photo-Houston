@@ -9,41 +9,30 @@ export default function AdminDashboard() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const checkAdminAccessAndLoad = async () => {
+    const loadCustomers = async () => {
       const {
         data: { session },
-        error: sessionError
       } = await supabase.auth.getSession();
 
-      if (sessionError || !session) {
-        return navigate("/client-login");
-      }
+      if (!session) return navigate("/client-login");
 
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) {
-        console.error("User fetch failed:", userError?.message);
-        return navigate("/client-login");
-      }
-
-      const { data: customer, error: customerError } = await supabase
+      const { data: user } = await supabase.auth.getUser();
+      const { data: customer, error: accessError } = await supabase
         .from("customers")
         .select("is_admin")
         .eq("user_id", user.id)
         .maybeSingle();
 
-      if (customerError || !customer || !customer.is_admin) {
-        console.warn("Access denied — not admin.");
-        return navigate("/client-login");
-      }
+      if (accessError || !customer?.is_admin) return navigate("/client-login");
 
-      const { data, error: customerListError } = await supabase
+      const { data, error: customerError } = await supabase
         .from("customers")
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (customerListError) {
+      if (customerError) {
         setError("Could not load customers.");
-        console.error(customerListError.message);
+        console.error(customerError.message);
       } else {
         setCustomers(data);
       }
@@ -51,14 +40,14 @@ export default function AdminDashboard() {
       setLoading(false);
     };
 
-    checkAdminAccessAndLoad();
+    loadCustomers();
   }, [navigate]);
 
-  if (loading) return <div className="p-6">Loading admin dashboard...</div>;
+  if (loading) return <div className="p-6">Loading customers...</div>;
   if (error) return <div className="p-6 text-red-600">{error}</div>;
 
   return (
-    <div className="p-6">
+    <div>
       <h1 className="text-2xl font-bold mb-6">Customer Directory</h1>
       <table className="min-w-full text-left border">
         <thead className="bg-gray-100 text-sm uppercase">
@@ -83,11 +72,12 @@ export default function AdminDashboard() {
               </td>
               <td className="px-4 py-2">
                 <button
-                  onClick={() => navigate(`/admin/customer/${c.id}`)}
+                  onClick={() => navigate(`/admin/customer/${c.id}/edit`)}
                   className="bg-black text-white px-3 py-1 rounded text-sm hover:bg-gray-800"
                 >
                   Manage
                 </button>
+              
               </td>
             </tr>
           ))}
