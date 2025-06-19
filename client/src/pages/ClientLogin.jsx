@@ -22,10 +22,11 @@ export default function ClientLogin() {
         .eq("user_id", user.id)
         .single();
 
-      if (error || !customer) {
-        console.error("Customer lookup failed:", error?.message);
-        return;
-      }
+if (error || !customer) {
+  console.warn("No customer record found — logging out.");
+  await supabase.auth.signOut();
+  return navigate("/client-login");
+}
 
       if (customer.is_admin) {
         return navigate("/admin/dashboard");
