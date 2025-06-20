@@ -11,23 +11,26 @@ export default function CustomerGallery() {
 
   useEffect(() => {
     const fetchGallery = async () => {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      const {
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.getSession();
+
       if (sessionError || !session?.user) {
         return navigate("/client-login");
       }
 
-      setUser(session.user);
+      const user = session.user;
 
-const { data: photos, error } = await supabase
-  .from("photos")
-  .select("*")
-  .eq("user_id", customer.id)
-  .eq("status", "approved")         // ✅ only show approved ones
-  .eq("viewable", true)             // ✅ optional, but good to include
-  .order("created_at", { ascending: true });
+      // ✅ Fetch the customer record by user_id
+      const { data: customer, error: custErr } = await supabase
+        .from("customers")
+        .select("id")
+        .eq("user_id", user.id)
+        .single();
 
       if (custErr || !customer) {
-        return navigate("/client-login");
+        return navigate("/register-complete");
       }
 
       const [{ data: sessionList }, { data: photoList }] = await Promise.all([
@@ -40,8 +43,9 @@ const { data: photos, error } = await supabase
         supabase
           .from("photos")
           .select("*")
-          .eq("customer_id", customer.id)
+          .eq("user_id", customer.id)       // ✅ correct lookup key
           .eq("status", "approved")
+          .eq("viewable", true)
           .order("created_at", { ascending: true }),
       ]);
 
