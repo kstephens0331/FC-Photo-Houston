@@ -18,11 +18,13 @@ export default function CustomerGallery() {
 
       setUser(session.user);
 
-      const { data: customer, error: custErr } = await supabase
-        .from("customers")
-        .select("id")
-        .eq("user_id", session.user.id)
-        .single();
+const { data: photos, error } = await supabase
+  .from("photos")
+  .select("*")
+  .eq("user_id", customer.id)
+  .eq("status", "approved")         // ✅ only show approved ones
+  .eq("viewable", true)             // ✅ optional, but good to include
+  .order("created_at", { ascending: true });
 
       if (custErr || !customer) {
         return navigate("/client-login");
