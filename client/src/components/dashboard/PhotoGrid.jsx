@@ -5,12 +5,15 @@ import PhotoCard from "./PhotoCard";
 const PhotoGrid = () => {
   const [photos, setPhotos] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [sessionId, setSessionId] = useState(null);
+  const [userId, setUserId] = useState(null);
+  const [favoritesOnly, setFavoritesOnly] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxImages, setLightboxImages] = useState([]);
 
   useEffect(() => {
-    // Get the current user and session ID
     supabase.auth.getUser().then(({ data: { user } }) => {
-      setSessionId(user?.id);
+      setUserId(user?.id);
     });
   }, []);
 
@@ -20,10 +23,12 @@ const PhotoGrid = () => {
         const { data, error } = await supabase
           .from("photos")
           .select("*")
-          .eq("sessionId", sessionId);
+          .eq("user_id", userId)
+          .eq("status", "approved")
+          .eq("viewable", true)
+          .order("created_at", { ascending: true });
 
         if (error) throw error;
-
         setPhotos(data);
       } catch (error) {
         console.error("Error fetching photos:", error.message);
@@ -32,10 +37,10 @@ const PhotoGrid = () => {
       }
     };
 
-    if (sessionId) {
+    if (userId) {
       fetchPhotos();
     }
-  }, [sessionId]);
+  }, [userId]);
 
   const updatePhoto = (id, updatedFields) => {
     setPhotos((prev) =>
@@ -43,26 +48,80 @@ const PhotoGrid = () => {
         photo.id === id ? { ...photo, ...updatedFields } : photo
       )
     );
-    // Optionally update Supabase row here
   };
 
-  if (loading) return <p>Loading photos...</p>;
+  const filteredPhotos = favoritesOnly
+    ? photos.filter((photo) => photo.favorite === true)
+    : photos;
+
+  const allImageUrls = filteredPhotos.map(
+    (photo) =>
+      `https://atipokknjidtpidpkeej.supabase.co/storage/v1/object/public/photos/${photo.session_id}/${photo.user_id}/${photo.file_name}`
+  );
+
+  const handleOpenLightbox = (index) => {
+    setLightboxImages(allImageUrls);
+    setLightboxIndex(index);
+    setLightboxOpen(true);
+  };
+
+  if (loading) return <p className="text-center py-12">Loading photos...</p>;
 
   return (
-    <div>
-      <h2 className="text-2xl font-bold mb-6">My Gallery</h2>
-      {photos.length === 0 ? (
-        <p className="text-gray-600">No photos found for your session.</p>
+    <div className="px-4 py-10">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold">My Gallery</h2>
+        <button
+          onClick={() => setFavoritesOnly((prev) => !prev)}
+          className={`px-4 py-2 rounded ${
+            favoritesOnly ? "bg-yellow-400" : "bg-gray-200"
+          }`}
+        >
+          {favoritesOnly ? "Show All" : "Show Favorites Only"}
+        </button>
+      </div>
+
+      {filteredPhotos.length === 0 ? (
+        <p className="text-gray-600">No {favoritesOnly ? "favorited" : "approved"} photos found.</p>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-          {photos.map((photo) => (
-            <PhotoCard
-              key={photo.id}
-              photo={photo}
-              onUpdate={(fields) => updatePhoto(photo.id, fields)}
-            />
-          ))}
+          {filteredPhotos.map((photo, index) => {
+            const photoUrl = `https://atipokknjidtpidpkeej.supabase.co/storage/v1/object/public/photos/${photo.session_id}/${photo.user_id}/${photo.file_name}`;
+            return (
+              <div
+                key={photo.id}
+                onClick={() => handleOpenLightbox(index)}
+                className="cursor-zoom-in"
+              >
+                <PhotoCard
+                  photo={photo}
+                  onUpdate={(fields) => updatePhoto(photo.id, fields)}
+                />
+              </div>
+            );
+          })}
         </div>
+      )}
+
+      {lightboxOpen && (
+        <Lightbox
+          mainSrc={lightboxImages[lightboxIndex]}
+          nextSrc={lightboxImages[(lightboxIndex + 1) % lightboxImages.length]}
+          prevSrc={
+            lightboxImages[
+              (lightboxIndex + lightboxImages.length - 1) % lightboxImages.length
+            ]
+          }
+          onCloseRequest={() => setLightboxOpen(false)}
+          onMovePrevRequest={() =>
+            setLightboxIndex(
+              (lightboxIndex + lightboxImages.length - 1) % lightboxImages.length
+            )
+          }
+          onMoveNextRequest={() =>
+            setLightboxIndex((lightboxIndex + 1) % lightboxImages.length)
+          }
+        />
       )}
     </div>
   );
