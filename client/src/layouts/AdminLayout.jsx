@@ -9,9 +9,16 @@ export default function AdminLayout() {
   const location = useLocation();
   const [loading, setLoading] = useState(true);
 
-  const verifyAdmin = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return navigate("/client-login");
+ const verifyAdmin = async () => {
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      console.error("No user session found.");
+      return navigate("/client-login");
+    }
 
     const { data: customer, error } = await supabase
       .from("customers")
@@ -19,7 +26,10 @@ export default function AdminLayout() {
       .eq("user_id", user.id)
       .maybeSingle();
 
-    if (error || !customer?.is_admin) return navigate("/client-login");
+    if (error || !customer?.is_admin) {
+      console.error("Not an admin or error occurred:", error?.message);
+      return navigate("/client-login");
+    }
 
     setLoading(false);
   };

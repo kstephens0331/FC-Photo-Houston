@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { supabase } from '../../services/supabaseClient.js'; // Ensure path is correct
-import { Link } from 'react-router-dom'; // Import Link
+import { supabase } from '../../services/supabaseClient.js'; // Adjust path if needed
+import { Link } from 'react-router-dom';
 
 export default function CustomerList() {
   const [customers, setCustomers] = useState([]);
@@ -13,15 +13,12 @@ export default function CustomerList() {
       setLoading(true);
       setError(null);
       try {
-        // Fetch from the 'profiles' table instead of 'customers'
-      const { data, error: fetchError } = await supabase
-        .from('secure_profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
+        const { data, error: fetchError } = await supabase
+          .from('secure_profiles') // ✅ changed from 'profiles'
+          .select('*')
+          .order('created_at', { ascending: false });
 
-        if (fetchError) {
-          throw new Error(fetchError.message);
-        }
+        if (fetchError) throw new Error(fetchError.message);
         setCustomers(data);
       } catch (err) {
         console.error('Error fetching customers:', err);
@@ -68,10 +65,7 @@ export default function CustomerList() {
     <>
       <Helmet>
         <title>Customers | Collision & Refinish Shop</title>
-        <meta
-          name="description"
-          content="View and manage customer accounts and their linked vehicles."
-        />
+        <meta name="description" content="View and manage customer accounts and their linked vehicles." />
       </Helmet>
 
       <div className="space-y-6">
