@@ -14,7 +14,7 @@ export default function CustomerList() {
       setError(null);
       try {
         const { data, error: fetchError } = await supabase
-          .from('secure_profiles') // ✅ changed from 'profiles'
+          .from('customers') // ✅ changed from 'profiles'
           .select('*')
           .order('created_at', { ascending: false });
 
