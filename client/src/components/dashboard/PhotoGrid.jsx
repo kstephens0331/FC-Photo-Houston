@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { supabase } from "../../utils/supabaseClient";
+import { supabase } from "../../supabaseClient";
 import PhotoCard from "./PhotoCard";
+import Lightbox from "react-image-lightbox";
+import "react-image-lightbox/style.css";
 
 const PhotoGrid = () => {
   const [photos, setPhotos] = useState([]);

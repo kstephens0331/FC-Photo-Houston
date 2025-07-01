@@ -12,37 +12,32 @@ export default function AdminCustomer() {
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
-    const loadCustomer = async () => {
-      console.log("🔍 Looking up customer with id:", id);
+const loadCustomer = async () => {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
 
-      // First try matching by Supabase `id`
-      let { data, error } = await supabase
-        .from("customers")
-        .select("*")
-        .eq("id", id)
-        .maybeSingle();
+  if (!session) {
+    console.error("⚠️ No session found.");
+    return;
+  }
 
-      if (!data) {
-        // Fallback: try matching by `customer_id` (numeric/serial)
-        const fallback = await supabase
-          .from("customers")
-          .select("*")
-          .eq("customer_id", id)
-          .maybeSingle();
+  const res = await fetch("https://<project-ref>.functions.supabase.co/get-customer", {
+    headers: {
+      Authorization: `Bearer ${session.access_token}`,
+    },
+  });
 
-        data = fallback.data;
-        error = fallback.error;
-      }
+  const data = await res.json();
 
-      if (error || !data) {
-        console.error("❌ Customer not found:", error?.message);
-        setCustomer(null);
-      } else {
-        setCustomer(data);
-      }
+  if (!res.ok) {
+    console.error("❌ Failed to fetch customer:", data.error);
+    setCustomer(null);
+    return;
+  }
 
-      setLoading(false);
-    };
+  setCustomer(data);
+};
 
     loadCustomer();
   }, [id]);
