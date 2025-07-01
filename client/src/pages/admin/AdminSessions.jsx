@@ -22,7 +22,7 @@ export default function AdminSessions() {
 
       const { data, error } = await supabase
         .from("sessions")
-        .select("id, session_id, user_id, created_at, customers(name)")
+        .select("id, user_id, created_at, customers(name)")
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -43,7 +43,7 @@ photoData?.forEach((p) => {
 
       const combined = data.map((s) => ({
         ...s,
-        photoCount: photoCounts[s.session_id] || 0,
+        photoCount: photoCounts[s.id] || 0,
         customerName: s.customers?.name || "Unknown",
       }));
 
@@ -72,13 +72,13 @@ photoData?.forEach((p) => {
         <tbody>
           {sessions.map((session) => (
             <tr key={session.id} className="border-t">
-              <td className="px-4 py-2 font-mono">{session.session_id}</td>
+              <td className="px-4 py-2 font-mono">{session.id}</td>
               <td className="px-4 py-2">{session.customerName}</td>
               <td className="px-4 py-2">{new Date(session.created_at).toLocaleDateString()}</td>
               <td className="px-4 py-2">{session.photoCount}</td>
               <td className="px-4 py-2">
                 <button
-                  onClick={() => navigate(`/admin/session/${session.session_id}`)}
+                  onClick={() => navigate(`/admin/session/${session.id}`)}
                   className="bg-black text-white px-3 py-1 rounded text-sm hover:bg-gray-800"
                 >
                   View Session
