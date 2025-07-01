@@ -65,10 +65,16 @@ useEffect(() => {
     setUploading(true);
 
     const { error: sessionErr } = await supabase
-      .from("sessions")
-      .insert([{ session_id: sessionId, user_id: customer.id }])
-      .select()
-      .maybeSingle();
+  .from("sessions")
+  .insert([{
+    user_id: customer.id,
+    session_label: sessionId,
+    session_name: sessionId,
+    session_date: new Date().toISOString().split("T")[0], // today
+    notes: "Uploaded via AdminCustomer.jsx"
+  }])
+  .select()
+  .maybeSingle();
 
     if (sessionErr) {
   const msg = sessionErr.message || "";
