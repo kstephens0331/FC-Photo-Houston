@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { FiLogOut } from "react-icons/fi";
 import { supabase } from "../utils/supabaseClient";
+import { useEffect, useState } from "react";
 
 export default function Sidebar({ isAdmin = false }) {
   const location = useLocation();
@@ -10,19 +11,12 @@ export default function Sidebar({ isAdmin = false }) {
     window.location.href = "/client-login";
   };
 
-  const links = isAdmin
-    ? [
-        { to: "/admin/dashboard", label: "Dashboard" },
-        { to: "/admin/customers", label: "Customers" },
-        { to: "/admin/sessions", label: "Sessions" },
-        { to: "/admin/quotes", label: "Submitted Quotes", showDot: true },
-      ]
-    : [
-        { to: "/dashboard", label: "Dashboard" },
-        { to: "/dashboard/gallery", label: "Gallery" },
-        { to: "/dashboard/settings", label: "Settings" },
-        { to: "/dashabord/quotes", label: "Submit Quote"},
-      ];
+const links = [
+  { to: "/dashboard", label: "Dashboard" },
+  { to: "/dashboard/gallery", label: "Gallery" },
+  { to: "/dashboard/settings", label: "Settings" },
+  { to: "/dashboard/quotes", label: "Submit Quote" },
+];
 
   return (
     <div className="w-64 bg-black text-white p-6 space-y-4">

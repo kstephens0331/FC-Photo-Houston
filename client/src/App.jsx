@@ -33,6 +33,7 @@ import AdminCustomerEdit from "./pages/admin/AdminCustomerEdit";
 import AdminSessionCreate from "./pages/admin/AdminSessionCreate";
 import AdminPhotoUpload from "./pages/admin/AdminPhotoUpload";
 import AdminSessionDetails from "./pages/admin/AdminSessionDetails";
+import AdminQuotes from "./pages/admin/AdminQuotes";
 
 
 
@@ -95,6 +96,7 @@ const App = () => {
   <Route path="/admin/photo-upload" element={<AdminPhotoUpload />} />
   <Route path="/admin/session/:sessionId" element={<AdminSessionDetails />} />
   <Route path="/admin/customer/:id" element={<AdminCustomer />} />
+  <Route path="/admin/quotes" element={<AdminQuotes />} />
 </Route>
 <Route path="/admin-login" element={<AdminLogin />} />
           {/* 404 */}
