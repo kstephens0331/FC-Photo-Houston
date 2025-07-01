@@ -72,7 +72,7 @@ photoData?.forEach((p) => {
         <tbody>
           {sessions.map((session) => (
             <tr key={session.id} className="border-t">
-              <td className="px-4 py-2 font-mono">{session.id}</td>
+              <td className="px-4 py-2 font-mono">{session.session_label || session.id}</td>
               <td className="px-4 py-2">{session.customerName}</td>
               <td className="px-4 py-2">{new Date(session.created_at).toLocaleDateString()}</td>
               <td className="px-4 py-2">{session.photoCount}</td>
