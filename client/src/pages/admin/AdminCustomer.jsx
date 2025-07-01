@@ -65,17 +65,20 @@ useEffect(() => {
     setUploading(true);
 
     const { error: sessionErr } = await supabase
-      .from("photo_sessions")
+      .from("sessions")
       .insert([{ session_id: sessionId, user_id: customer.id }])
       .select()
       .maybeSingle();
 
-    if (sessionErr && !sessionErr.message.includes("duplicate")) {
-      alert("Failed to create session.");
-      console.error(sessionErr);
-      setUploading(false);
-      return;
-    }
+    if (sessionErr) {
+  const msg = sessionErr.message || "";
+  if (!msg.includes("duplicate")) {
+    alert("Failed to create session.");
+    console.error(sessionErr);
+    setUploading(false);
+    return;
+  }
+}
 
     for (let file of files) {
       const fileName = `${customer.id}/${sessionId}/${Date.now()}-${file.name}`;
