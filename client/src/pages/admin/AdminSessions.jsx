@@ -34,12 +34,12 @@ export default function AdminSessions() {
       const photoCounts = {};
       const { data: photoData } = await supabase
         .from("customer_photos")
-        .select("sessionId");
+        .select("session_id");
 
-      photoData?.forEach((p) => {
-        if (!photoCounts[p.sessionId]) photoCounts[p.sessionId] = 0;
-        photoCounts[p.sessionId]++;
-      });
+photoData?.forEach((p) => {
+  if (!photoCounts[p.session_id]) photoCounts[p.session_id] = 0;
+  photoCounts[p.session_id]++;
+});
 
       const combined = data.map((s) => ({
         ...s,
