@@ -22,7 +22,7 @@ const loadCustomer = async () => {
     return;
   }
 
-  const res = await fetch("https://<project-ref>.functions.supabase.co/get-customer", {
+  const res = await fetch("https://atipokknjidtpidpkeej.functions.supabase.co/get-customer", {
     headers: {
       Authorization: `Bearer ${session.access_token}`,
     },
