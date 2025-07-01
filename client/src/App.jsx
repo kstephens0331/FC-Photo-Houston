@@ -11,6 +11,8 @@ import Favorites from "./components/dashboard/Favorites";
 import Quotes from "./components/dashboard/Quotes";
 import Settings from "./components/dashboard/Settings";
 import CustomerGallery from "./pages/ClientGallery";
+import QuoteRequestForm from "./components/dashboard/QuoteRequestForm";
+import QuoteHistory from "./components/dashboard/QuoteHistory";
 
 // Public Pages
 import Home from './pages/Home';
@@ -79,7 +81,8 @@ const App = () => {
             <Route path="favorites" element={<Favorites />} />
             <Route path="quotes" element={<Quotes />} />
             <Route path="settings" element={<Settings />} />
-              <Route path="gallery" element={<CustomerGallery />} />
+              <Route path="/dashboard/quote-request" element={<QuoteRequestForm />} />
+              <Route path="quotes" element={<QuoteHistory />} />
           </Route>
 
           {/* 🔐 Admin Routes */}
