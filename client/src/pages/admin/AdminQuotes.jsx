@@ -7,10 +7,10 @@ const AdminQuotes = () => {
 
   useEffect(() => {
     const loadQuotes = async () => {
-      const { data, error } = await supabase
-        .from("quotes")
-        .select("*, profiles(name, email)")
-        .order("created_at", { ascending: false });
+const { data, error } = await supabase
+  .from("quotes")
+  .select("*")
+  .order("created_at", { ascending: false });
 
       if (!error) setQuotes(data);
       setLoading(false);
