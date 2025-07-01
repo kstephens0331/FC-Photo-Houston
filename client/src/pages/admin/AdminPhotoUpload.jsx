@@ -85,17 +85,18 @@ export default function AdminPhotoUpload() {
       }
 
       // ✅ Insert into photos table using correct column names
+            // ✅ Insert into customer_photos table
       const { error: insertError } = await supabase.from("customer_photos").insert({
-  user_id: selectedCustomerId,
-  file_url: publicUrl,
-  session_id: selectedSessionId,
-  is_approved: false,
-  uploaded_at: new Date().toISOString()
-});
+        user_id: selectedCustomerId,
+        session_id: selectedSessionId,
+        file_url: publicUrl,
+        uploaded_at: new Date().toISOString(),
+        is_approved: false,
+      });
 
       if (insertError) {
-        console.error("Error saving photo records:", insertError.message);
-        setError("Failed to save photo records.");
+        console.error("Error saving photo record:", insertError.message);
+        setError("Failed to save photo record.");
         setUploading(false);
         return;
       }
@@ -164,3 +165,4 @@ export default function AdminPhotoUpload() {
     </div>
   );
 }
+
