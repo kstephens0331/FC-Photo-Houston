@@ -85,13 +85,13 @@ export default function AdminPhotoUpload() {
       }
 
       // ✅ Insert into photos table using correct column names
-      const { error: insertError } = await supabase.from("photos").insert({
-        user_id: selectedCustomerId,
-        url: publicUrl,
-        session_id: selectedSessionId,
-        viewable: true,
-        status: 'pending',
-      });
+      const { error: insertError } = await supabase.from("customer_photos").insert({
+  user_id: selectedCustomerId,
+  file_url: publicUrl,
+  session_id: selectedSessionId,
+  is_approved: false,
+  uploaded_at: new Date().toISOString()
+});
 
       if (insertError) {
         console.error("Error saving photo records:", insertError.message);
