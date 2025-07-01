@@ -21,7 +21,7 @@ export default function AdminSessions() {
       if (!adminCheck?.is_admin) return navigate("/");
 
       const { data, error } = await supabase
-        .from("photo_sessions")
+        .from("sessions")
         .select("id, session_id, user_id, created_at, customers(name)")
         .order("created_at", { ascending: false });
 
