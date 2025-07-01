@@ -22,7 +22,7 @@ export default function AdminSessions() {
 
       const { data, error } = await supabase
         .from("sessions")
-        .select("id, user_id, created_at, customers(name)")
+      .select("id, session_label, customer_id, created_at, customer:customer_id(name)")
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -41,11 +41,11 @@ photoData?.forEach((p) => {
   photoCounts[p.sessionid]++;
 });
 
-      const combined = data.map((s) => ({
-        ...s,
-        photoCount: photoCounts[s.id] || 0,
-        customerName: s.customers?.name || "Unknown",
-      }));
+const combined = data.map((s) => ({
+  ...s,
+  photoCount: photoCounts[s.id.toString()] || 0,
+  customerName: s.customers?.name || "Unknown",
+}));
 
       setSessions(combined);
       setLoading(false);
