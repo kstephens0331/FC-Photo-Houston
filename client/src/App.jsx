@@ -82,7 +82,7 @@ const App = () => {
             <Route path="quotes" element={<Quotes />} />
             <Route path="settings" element={<Settings />} />
               <Route path="/dashboard/quote-request" element={<QuoteRequestForm />} />
-              <Route path="quotes" element={<QuoteHistory />} />
+              <Route path="/dashboard/quotes" element={<QuoteHistory />} />
           </Route>
 
           {/* 🔐 Admin Routes */}

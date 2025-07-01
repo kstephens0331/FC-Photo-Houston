@@ -15,11 +15,13 @@ export default function Sidebar({ isAdmin = false }) {
         { to: "/admin/dashboard", label: "Dashboard" },
         { to: "/admin/customers", label: "Customers" },
         { to: "/admin/sessions", label: "Sessions" },
+        { to: "/admin/quotes", label: "Submitted Quotes", showDot: true },
       ]
     : [
         { to: "/dashboard", label: "Dashboard" },
         { to: "/dashboard/gallery", label: "Gallery" },
         { to: "/dashboard/settings", label: "Settings" },
+        { to: "/dashabord/quotes", label: "Submit Quote"},
       ];
 
   return (
