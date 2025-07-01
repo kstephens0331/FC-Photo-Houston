@@ -11,36 +11,50 @@ export default function AdminCustomer() {
   const [uploading, setUploading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  useEffect(() => {
-const loadCustomer = async () => {
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+useEffect(() => {
+  const loadCustomer = async () => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
 
-  if (!session) {
-    console.error("⚠️ No session found.");
-    return;
-  }
+    if (!session) {
+      console.error("⚠️ No session found.");
+      setLoading(false);
+      return;
+    }
 
-  const res = await fetch("https://atipokknjidtpidpkeej.functions.supabase.co/get-customer", {
-    headers: {
-      Authorization: `Bearer ${session.access_token}`,
-    },
-  });
+    try {
+      const res = await fetch(
+        "https://atipokknjidtpidpkeej.functions.supabase.co/get-customer",
+        {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        }
+      );
 
-  const data = await res.json();
+      console.log("🛰️ Response status:", res.status);
 
-  if (!res.ok) {
-    console.error("❌ Failed to fetch customer:", data.error);
-    setCustomer(null);
-    return;
-  }
+      const data = await res.json();
 
-  setCustomer(data);
-};
+      if (!res.ok) {
+        console.error("❌ Failed to fetch customer:", data.error);
+        setCustomer(null);
+        setLoading(false); // 🔥 FIXED
+        return;
+      }
 
-    loadCustomer();
-  }, [id]);
+      setCustomer(data);
+      setLoading(false); // 🔥 FIXED
+    } catch (err) {
+      console.error("❌ Network error:", err);
+      setCustomer(null);
+      setLoading(false); // 🔥 FIXED
+    }
+  };
+
+  loadCustomer();
+}, [id]);
 
   const handleUpload = async () => {
     if (!customer?.id || !sessionId || files.length === 0) {
