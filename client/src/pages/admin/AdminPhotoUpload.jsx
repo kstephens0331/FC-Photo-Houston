@@ -1,129 +1,135 @@
-import { useEffect, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useEffect, useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "../../utils/supabaseClient";
 
 export default function AdminPhotoUpload() {
-  const location = useLocation();
-  const queryParams = new URLSearchParams(location.search);
-  const preCustomerId = queryParams.get("customer_id");
-  const preSessionId = queryParams.get("session_id");
-
   const [customers, setCustomers] = useState([]);
   const [sessions, setSessions] = useState([]);
-  const [selectedCustomerId, setSelectedCustomerId] = useState(preCustomerId || "");
-  const [selectedSessionId, setSelectedSessionId] = useState(preSessionId || "");
+  const [selectedCustomerId, setSelectedCustomerId] = useState("");
+  const [selectedSessionId, setSelectedSessionId] = useState("");
   const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
   const [success, setSuccess] = useState(null);
   const [error, setError] = useState(null);
-
+  const fileInputRef = useRef(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const loadCustomers = async () => {
-      const { data, error } = await supabase
-        .from("customers")
-        .select("id, name, email")
-        .order("created_at", { ascending: false });
-
-      if (!error) setCustomers(data);
-    };
-
-    loadCustomers();
+    supabase
+      .from("customers")
+      .select("id, name, email")
+      .order("created_at", { ascending: false })
+      .then(({ data }) => setCustomers(data || []));
   }, []);
 
   useEffect(() => {
-    const loadSessions = async () => {
-      if (!selectedCustomerId) return;
-
-      const { data, error } = await supabase
-        .from("sessions")
-        .select("id, session_name")
-        .eq("customer_id", selectedCustomerId)
-        .order("session_date", { ascending: false });
-
-      if (!error) setSessions(data);
-    };
-
-    loadSessions();
+    if (!selectedCustomerId) return;
+    supabase
+      .from("sessions")
+      .select("id, session_name")
+      .eq("customer_id", selectedCustomerId)
+      .order("session_date", { ascending: false })
+      .then(({ data }) => setSessions(data || []));
   }, [selectedCustomerId]);
 
   const handleUpload = async () => {
     setUploading(true);
     setError(null);
     setSuccess(null);
+    setProgress(0);
 
     if (!selectedCustomerId || !selectedSessionId || files.length === 0) {
-      setError("Please select customer, session, and choose images.");
+      setError("Please select customer, session, and files.");
       setUploading(false);
       return;
     }
 
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    const token = session?.access_token;
+    if (!token) {
+      setError("Auth session missing.");
+      setUploading(false);
+      return;
+    }
+
+    let uploadedCount = 0;
+
     for (const file of files) {
       const filePath = `${selectedCustomerId}/${selectedSessionId}/${Date.now()}-${file.name}`;
 
-      const { data: storageData, error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from("photos")
-        .upload(filePath, file);
+        .upload(filePath, file, {
+          cacheControl: "3600",
+          upsert: true,
+        });
 
       if (uploadError) {
         console.error("Upload failed:", uploadError.message);
-        setError("Upload failed.");
-        setUploading(false);
-        return;
+        continue;
       }
 
       const { data: publicUrlData } = supabase.storage
         .from("photos")
         .getPublicUrl(filePath);
 
-      const publicUrl = publicUrlData?.publicUrl;
-      if (!publicUrl) {
-        setError("Failed to get public URL.");
-        setUploading(false);
-        return;
+      const response = await fetch(
+        "https://atipokknjidtpidpkeej.functions.supabase.co/upload-session-photos",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            customer_id: selectedCustomerId,
+            session_id: selectedSessionId,
+            file_url: publicUrlData?.publicUrl,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        console.error("❌ Edge upload failed:", await response.text());
+        continue;
       }
 
-      // ✅ Insert into photos table using correct column names
-            // ✅ Insert into customer_photos table
-      const { error: insertError } = await supabase.from("customer_photos").insert({
-        user_id: selectedCustomerId,
-        session_id: selectedSessionId,
-        file_url: publicUrl,
-        uploaded_at: new Date().toISOString(),
-        is_approved: false,
-      });
-
-      if (insertError) {
-        console.error("Error saving photo record:", insertError.message);
-        setError("Failed to save photo record.");
-        setUploading(false);
-        return;
-      }
+      uploadedCount++;
+      setProgress(Math.round((uploadedCount / files.length) * 100));
     }
 
-    setSuccess("Photos uploaded successfully!");
-    setFiles([]);
+    setSuccess("All files uploaded!");
     setUploading(false);
+    setFiles([]);
+    setProgress(100);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setFiles([...files, ...Array.from(e.dataTransfer.files)]);
   };
 
   return (
-    <div className="p-6 max-w-2xl">
-      <h1 className="text-2xl font-bold mb-4">Upload Photos to Session</h1>
+    <div className="p-6 max-w-2xl mx-auto">
+      <h1 className="text-2xl font-bold mb-4">Admin Photo Upload</h1>
 
       {error && <div className="text-red-600 mb-4">{error}</div>}
       {success && <div className="text-green-600 mb-4">{success}</div>}
 
-      <label className="block mb-2 font-medium">Select Customer</label>
+      <label className="block font-medium mb-1">Customer</label>
       <select
-        className="w-full p-2 border rounded mb-4"
         value={selectedCustomerId}
         onChange={(e) => {
           setSelectedCustomerId(e.target.value);
           setSelectedSessionId("");
         }}
+        className="w-full mb-4 p-2 border rounded"
       >
-        <option value="">-- Choose a customer --</option>
+        <option value="">-- Select Customer --</option>
         {customers.map((c) => (
           <option key={c.id} value={c.id}>
             {c.name || c.email}
@@ -131,14 +137,14 @@ export default function AdminPhotoUpload() {
         ))}
       </select>
 
-      <label className="block mb-2 font-medium">Select Session</label>
+      <label className="block font-medium mb-1">Session</label>
       <select
-        className="w-full p-2 border rounded mb-4"
         value={selectedSessionId}
         onChange={(e) => setSelectedSessionId(e.target.value)}
+        className="w-full mb-4 p-2 border rounded"
         disabled={!selectedCustomerId}
       >
-        <option value="">-- Choose a session --</option>
+        <option value="">-- Select Session --</option>
         {sessions.map((s) => (
           <option key={s.id} value={s.id}>
             {s.session_name}
@@ -146,23 +152,46 @@ export default function AdminPhotoUpload() {
         ))}
       </select>
 
-      <label className="block mb-2 font-medium">Upload Images</label>
-      <input
-        type="file"
-        multiple
-        accept="image/*"
-        className="w-full p-2 border rounded mb-4"
-        onChange={(e) => setFiles([...e.target.files])}
-      />
+      <label className="block font-medium mb-2">Upload Files</label>
+      <div
+        onDrop={handleDrop}
+        onDragOver={(e) => e.preventDefault()}
+        className="border-2 border-dashed border-gray-400 p-6 mb-4 text-center rounded cursor-pointer bg-gray-50"
+        onClick={() => fileInputRef.current.click()}
+      >
+        <p className="text-gray-600">Drag & drop files here or click to browse</p>
+        <input
+          type="file"
+          multiple
+          ref={fileInputRef}
+          className="hidden"
+          accept="image/*"
+          onChange={(e) => setFiles([...files, ...Array.from(e.target.files)])}
+        />
+      </div>
+
+      {files.length > 0 && (
+        <div className="mb-4 text-sm text-gray-700">
+          {files.length} file(s) selected
+        </div>
+      )}
+
+      {uploading && (
+        <div className="w-full bg-gray-200 rounded h-4 mb-4 overflow-hidden">
+          <div
+            className="bg-black h-full transition-all"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      )}
 
       <button
         onClick={handleUpload}
-        className="bg-black text-white px-4 py-2 rounded hover:bg-gray-800 transition"
         disabled={uploading}
+        className="bg-black text-white px-6 py-2 rounded hover:bg-gray-800 disabled:opacity-50"
       >
-        {uploading ? "Uploading..." : "Upload Photos"}
+        {uploading ? "Uploading..." : "Upload"}
       </button>
     </div>
   );
 }
-

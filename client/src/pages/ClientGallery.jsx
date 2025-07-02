@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../utils/supabaseClient";
 import { useNavigate } from "react-router-dom";
+import { FaRegStar, FaStar } from "react-icons/fa";
 
 export default function CustomerGallery() {
   const [user, setUser] = useState(null);
@@ -16,22 +17,16 @@ export default function CustomerGallery() {
         error: sessionError,
       } = await supabase.auth.getSession();
 
-      if (sessionError || !session?.user) {
-        return navigate("/client-login");
-      }
-
+      if (sessionError || !session?.user) return navigate("/client-login");
       const user = session.user;
 
-      // ✅ Fetch the customer record by user_id
       const { data: customer, error: custErr } = await supabase
         .from("customers")
         .select("id")
         .eq("user_id", user.id)
         .single();
 
-      if (custErr || !customer) {
-        return navigate("/register-complete");
-      }
+      if (custErr || !customer) return navigate("/register-complete");
 
       const [{ data: sessionList }, { data: photoList }] = await Promise.all([
         supabase
@@ -41,14 +36,14 @@ export default function CustomerGallery() {
           .order("session_date", { ascending: false }),
 
         supabase
-          .from("photos")
+          .from("customer_photos")
           .select("*")
-          .eq("user_id", customer.id)       // ✅ correct lookup key
-          .eq("status", "approved")
-          .eq("viewable", true)
-          .order("created_at", { ascending: true }),
+          .eq("user_id", customer.id)
+          .eq("is_approved", true)
+          .order("uploaded_at", { ascending: true }),
       ]);
 
+      setUser(customer);
       setSessions(sessionList || []);
       setPhotos(photoList || []);
       setLoading(false);
@@ -57,25 +52,34 @@ export default function CustomerGallery() {
     fetchGallery();
   }, [navigate]);
 
+  const toggleFavorite = async (photoId, currentValue) => {
+    const { error } = await supabase
+      .from("customer_photos")
+      .update({ is_favorite: !currentValue })
+      .eq("id", photoId);
+
+    if (!error) {
+      setPhotos((prev) =>
+        prev.map((p) =>
+          p.id === photoId ? { ...p, is_favorite: !currentValue } : p
+        )
+      );
+    } else {
+      console.error("Failed to toggle favorite:", error.message);
+    }
+  };
+
   if (loading) return <div className="p-6">Loading gallery...</div>;
 
   return (
-    <div
-      className="p-6"
-      onContextMenu={(e) => e.preventDefault()}
-      style={{
-        userSelect: "none",
-        pointerEvents: "auto",
-        WebkitTouchCallout: "none",
-        WebkitUserSelect: "none",
-        MozUserSelect: "none",
-        msUserSelect: "none",
-      }}
-    >
+    <div className="p-6">
       <h1 className="text-2xl font-bold mb-6">Your Photo Gallery</h1>
 
       {sessions.map((session) => {
-        const sessionPhotos = photos.filter((p) => p.session_id === session.id);
+        const sessionPhotos = photos.filter(
+          (photo) => photo.session_id === session.id
+        );
+
         if (sessionPhotos.length === 0) return null;
 
         return (
@@ -84,16 +88,62 @@ export default function CustomerGallery() {
               {session.session_name} —{" "}
               {new Date(session.session_date).toLocaleDateString()}
             </h2>
+
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {sessionPhotos.map((photo) => (
-                <div key={photo.id} className="relative group">
+                <div
+                  key={photo.id}
+                  className="relative group rounded overflow-hidden shadow bg-white p-2"
+                >
                   <img
-                    src={photo.image_url}
+                    src={photo.file_url}
                     alt="Session"
-                    className="w-full h-auto rounded shadow select-none"
+                    className="w-full h-auto select-none rounded"
                     draggable={false}
-                    onContextMenu={(e) => e.preventDefault()}
-                    onCopy={(e) => e.preventDefault()}
+                  />
+
+                  <button
+                    className="absolute top-2 right-2 text-yellow-400 text-xl"
+                    onClick={() =>
+                      toggleFavorite(photo.id, photo.is_favorite)
+                    }
+                  >
+                    {photo.is_favorite ? <FaStar /> : <FaRegStar />}
+                  </button>
+
+                  {photo.downloadable && (
+    <a
+      href={photo.file_url}
+      download
+      className="absolute bottom-2 right-2 text-xs bg-white px-2 py-1 rounded shadow text-gray-700 hover:underline"
+    >
+      Download
+    </a>
+  )}
+
+                  <textarea
+                    defaultValue={photo.note || ""}
+                    placeholder="Add a note (optional)..."
+                    className="w-full mt-2 p-2 text-sm border rounded resize-none"
+                    onBlur={async (e) => {
+                      const newNote = e.target.value.trim();
+                      if (newNote !== (photo.note || "")) {
+                        const { error } = await supabase
+                          .from("customer_photos")
+                          .update({ note: newNote })
+                          .eq("id", photo.id);
+
+                        if (error) {
+                          console.error("Failed to save note:", error.message);
+                        } else {
+                          setPhotos((prev) =>
+                            prev.map((p) =>
+                              p.id === photo.id ? { ...p, note: newNote } : p
+                            )
+                          );
+                        }
+                      }
+                    }}
                   />
                 </div>
               ))}
