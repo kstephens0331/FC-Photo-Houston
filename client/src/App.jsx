@@ -22,6 +22,7 @@ import ClientLogin from './pages/ClientLogin';
 import CustomerRegistration from './pages/CustomerRegistration';
 import RegisterComplete from './pages/RegisterComplete';
 import NotFound from './pages/NotFound';
+import TrustedPartners from './pages/TrustedPartners';
 
 // Admin Portal Pages
 import AdminLogin from './pages/admin/AdminLogin';
@@ -64,6 +65,7 @@ const App = () => {
           <Route path="/services" element={<Services />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/gallery" element={<ClientGallery />} />
+          <Route path="/partners" element={<TrustedPartners />} />
           <Route path="/client-login" element={<ClientLogin />} />
           <Route path="/register" element={<CustomerRegistration />} />
           <Route path="/register-complete" element={<RegisterComplete />} />
