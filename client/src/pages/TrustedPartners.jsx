@@ -86,6 +86,13 @@ const partners = [
       'A complete USMLE Step 1 study platform with over 50,000 flashcards, 5,000-plus practice questions, video lectures, and AI-powered learning tools that adjust to the pace of each individual student.',
     url: 'https://getstepready.com',
   },
+  {
+    name: 'Lefty Cartel',
+    category: 'Sports & Community',
+    description:
+      'An exclusive brotherhood and apparel brand for left-handed ball players. Lefty Cartel pairs training resources with a members-only store and a growing community of athletes who celebrate what it means to bat and throw from the left side.',
+    url: 'https://leftycartel.net',
+  },
 ];
 
 export default function TrustedPartners() {
