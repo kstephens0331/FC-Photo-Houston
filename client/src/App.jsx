@@ -23,6 +23,8 @@ import CustomerRegistration from './pages/CustomerRegistration';
 import RegisterComplete from './pages/RegisterComplete';
 import NotFound from './pages/NotFound';
 import TrustedPartners from './pages/TrustedPartners';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfService from './pages/TermsOfService';
 
 // Admin Portal Pages
 import AdminLogin from './pages/admin/AdminLogin';
@@ -69,7 +71,8 @@ const App = () => {
           <Route path="/client-login" element={<ClientLogin />} />
           <Route path="/register" element={<CustomerRegistration />} />
           <Route path="/register-complete" element={<RegisterComplete />} />
-          
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/terms" element={<TermsOfService />} />
 
           {/* 🔐 Customer Dashboard */}
           <Route

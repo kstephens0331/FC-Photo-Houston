@@ -28,9 +28,14 @@ const Footer = () => {
             </div>
           </div>
 
+          <div className="flex justify-center gap-4 text-xs mt-4">
+            <Link to="/privacy" className="hover:underline">Privacy Policy</Link>
+            <span>|</span>
+            <Link to="/terms" className="hover:underline">Terms of Service</Link>
+          </div>
           <div>
-            <p className="text-xs text-gray-700 mt-4">
-              © 2025 FC Photo Houston. All rights reserved.{' '}
+            <p className="text-xs text-gray-700 mt-2">
+              © {new Date().getFullYear()} FC Photo Houston. All rights reserved.{' '}
               <a
                 href="https://stephenscode.dev"
                 target="_blank"
